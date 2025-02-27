@@ -1,0 +1,21 @@
+.App {
+  display: flex;
+  flex-direction: column;
+  height: 100vh; /* Full viewport height */ 
+}
+
+
+.App-header {
+  background-color: #282c34;
+  padding: 20px;
+  text-align: center;
+  color: white;
+}
+
+.App-body {
+  flex: 1; /* Fill up remaing space */ 
+  padding: 20px;
+  background-color: #fff;
+  overflow-y: auto; /* allows for scrolling up and down if overflow content */ 
+}
+
