@@ -41,11 +41,46 @@
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   font-size: 1em; /* Readable text */
   font-weight: 500;
+  text-decoration: none; /* Crucial for <a> tags */
+  display: inline-block; /* Mimics button behavior */
+  text-align: center; /* Centers text */
+  appearance: none; /* Removes default browser styling */
 }
 
 .sidebar-button:hover {
   transform: scale(1.05);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+
+.linked-sidebar-button {
+  width: 75%; /* Slightly wider button */
+  padding: 12px; /* More padding for a chunkier, modern look */
+  margin-bottom: 15px;
+  color: #fff;
+  background: linear-gradient(135deg, #6b7280, #4b5563); /* Cooler, modern gradient */
+  border: none;
+  border-radius: 50px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Softer, elevated shadow */
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  font-size: 1em; /* Readable text */
+  font-weight: 500;
+  text-decoration: none; /* Crucial for <a> tags */
+  display: inline-block; /* Mimics button behavior */
+  text-align: center; /* Centers text */
+  appearance: none; /* Removes default browser styling */
+}
+
+.linked-sidebar-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Optional: Reset default <a> styles globally */
+a.linked-sidebar-button {
+  color: #fff; /* Explicitly enforce your color */
+  text-decoration: none; /* Double-check no underline */
 }
 
 /* Main content styles */
@@ -132,3 +167,4 @@
   color: #6b7280; /* Muted gray for empty state */
   font-style: italic;
 }
+
