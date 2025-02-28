@@ -1,0 +1,82 @@
+/* Overview.css */
+
+/* Overall layout */
+.container {
+  display: flex;
+  height: 100vh;
+}
+
+/* Sidebar styles */
+.sidebar {
+  width: 160px;
+  background-color: #333;
+  color: #fff;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar h3 {
+  text-align: center;
+  margin: 0;
+}
+
+.sidebar-button {
+  width: 75%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border: none;
+  cursor: pointer;
+}
+
+/* Main content styles */
+.main-content {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.toggle-button {
+  align-self: flex-start;
+  margin: 10px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.board-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  padding: 20px;
+}
+
+/* Column styles */
+.column {
+  width: 400px;
+  padding: 10px;
+  background-color: #f0f0f0;
+  border-radius: 5px;
+  margin: 0 10px;
+}
+
+.column h3 {
+  text-align: center;
+  margin: 0 0 10px 0;
+}
+
+.droppable {
+  min-height: 600px;
+  padding: 10px;
+  background-color: #fff;
+  border-radius: 5px;
+}
+
+.empty-droppable {
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+  height: 100%;
+}
