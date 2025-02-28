@@ -23,7 +23,7 @@ function Overview() {
           <h3>Sidebar</h3>
           <button className="sidebar-button">Create a Ticket</button>
           <button className="sidebar-button">Releases</button>
-          <button className="sidebar-button">components</button>
+          <button className="sidebar-button">Components</button>
           <button className="sidebar-button">Tickets</button>
           <button className="sidebar-button">Settings</button>
         </div>
