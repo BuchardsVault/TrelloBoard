@@ -2,6 +2,7 @@ import {DndContext} from '@dnd-kit/core';
 import React, { useState } from 'react';
 import {Droppable} from './Droppable';
 import {Draggable} from './Draggable';
+import { Link } from 'react-router-dom';
 import './Overview.css'; // Import the CSS file
 
 function Overview() {
@@ -25,7 +26,12 @@ function Overview() {
           <button className="sidebar-button">Releases</button>
           <button className="sidebar-button">Components</button>
           <button className="sidebar-button">Tickets</button>
-          <button className="sidebar-button">Settings</button>
+          <Link to="/settings" className="linked-sidebar-button">
+             Settings
+          </Link>
+          <Link to="/dashboard" className="linked-sidebar-button">
+             Dashboard
+          </Link>
         </div>
       )}
       {/* Main content */}
