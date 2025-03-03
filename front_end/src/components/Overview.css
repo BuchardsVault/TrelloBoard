@@ -28,6 +28,33 @@
   font-weight: 600;
 }
 
+.ticket-button{
+  width: 85%; /* Slightly wider button */
+  padding: 12px; /* More padding for a chunkier, modern look */
+  margin-bottom: 15px;
+  color: #fff;
+  background: linear-gradient(135deg, #5a67d8, #434190); /* Cooler, modern gradient */
+  border: none;
+  border-radius: 50px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Softer, elevated shadow */
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  font-size: 1em; /* Readable text */
+  font-weight: 500;
+  text-decoration: none; /* Crucial for <a> tags */
+  display: inline-block; /* Mimics button behavior */
+  text-align: center; /* Centers text */
+  appearance: none; /* Removes default browser styling */
+  
+}
+
+.ticket-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+
+
 .sidebar-button {
   width: 85%; /* Slightly wider button */
   padding: 12px; /* More padding for a chunkier, modern look */
@@ -166,5 +193,100 @@ a.linked-sidebar-button {
   height: 100%;
   color: #6b7280; /* Muted gray for empty state */
   font-style: italic;
+}
+
+.ticket-card {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 10px;
+  margin: 5px 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.ticket-card h4 {
+  margin: 0 0 5px 0;
+  font-size: 16px;
+}
+
+.ticket-card p {
+  margin: 5px 0;
+  font-size: 14px;
+  color: #666;
+}
+
+/* Modal styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 400px;
+  max-width: 90%;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.form-group textarea {
+  height: 100px;
+  resize: vertical;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.submit-button {
+  background-color: #4CAF50;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.submit-button:hover {
+  background-color: #45a049;
+}
+
+.cancel-button {
+  background-color: #f44336;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.cancel-button:hover {
+  background-color: #da190b;
 }
 
