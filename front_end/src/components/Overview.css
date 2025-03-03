@@ -33,7 +33,7 @@
   padding: 12px; /* More padding for a chunkier, modern look */
   margin-bottom: 15px;
   color: #fff;
-  background: linear-gradient(135deg, #6b7280, #4b5563); /* Cooler, modern gradient */
+  background: linear-gradient(135deg, #5a67d8, #434190); /* Cooler, modern gradient */
   border: none;
   border-radius: 50px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Softer, elevated shadow */
@@ -58,7 +58,7 @@
   padding: 12px; /* More padding for a chunkier, modern look */
   margin-bottom: 15px;
   color: #fff;
-  background: linear-gradient(135deg, #6b7280, #4b5563); /* Cooler, modern gradient */
+  background: linear-gradient(135deg, #5a67d8, #434190); /* Cooler, modern gradient */
   border: none;
   border-radius: 50px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Softer, elevated shadow */
@@ -97,7 +97,7 @@ a.linked-sidebar-button {
   margin: 0 0 20px 10px;
   padding: 8px 16px; /* Larger button */
   color: #fff;
-  background: linear-gradient(135deg, #6b7280, #4b5563); /* Matching sidebar gradient */
+  background: linear-gradient(135deg, #5a67d8, #434190); /* Matching sidebar gradient */
   border: none;
   border-radius: 50px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);

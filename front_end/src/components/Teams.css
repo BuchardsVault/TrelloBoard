@@ -1,0 +1,171 @@
+/* Teams.css */
+
+/* Teams layout */
+.container {
+    display: flex;
+    height: 100vh;
+    background: linear-gradient(135deg, #eef2f7, #d9e2ec);
+  }
+  
+  /* Sidebar styles */
+  .sidebar {
+    width: 220px;
+    background-color: #ffffff;
+    color: #172b4d;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    /*justify-content: center; */
+    transition: width 0.3s ease;
+  }
+  
+  .sidebar h3 {
+    text-align: center;
+    margin: 1.5em 0; /* More vertical spacing */
+    font-size: 1.2em; /* Slightly larger for emphasis */
+    font-weight: 600;
+  }
+  
+  .sidebar-button {
+    width: 85%; /* Slightly wider button */
+    padding: 12px; /* More padding for a chunkier, modern look */
+    margin-bottom: 15px;
+    color: #fff;
+    background: linear-gradient(135deg, #5a67d8, #434190); /* Cooler, modern gradient */
+    border: none;
+    border-radius: 50px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Softer, elevated shadow */
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    font-size: 1em; /* Readable text */
+    font-weight: 500;
+    text-decoration: none; /* Crucial for <a> tags */
+    display: inline-block; /* Mimics button behavior */
+    text-align: center; /* Centers text */
+    appearance: none; /* Removes default browser styling */
+  }
+  
+  .sidebar-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  }
+  
+  
+  .linked-sidebar-button {
+    width: 75%; /* Slightly wider button */
+    padding: 12px; /* More padding for a chunkier, modern look */
+    margin-bottom: 15px;
+    color: #fff;
+    background: linear-gradient(135deg, #5a67d8, #434190); /* Cooler, modern gradient */
+    border: none;
+    border-radius: 50px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Softer, elevated shadow */
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    font-size: 1em; /* Readable text */
+    font-weight: 500;
+    text-decoration: none; /* Crucial for <a> tags */
+    display: inline-block; /* Mimics button behavior */
+    text-align: center; /* Centers text */
+    appearance: none; /* Removes default browser styling */
+  }
+  
+  .linked-sidebar-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Optional: Reset default <a> styles globally */
+  a.linked-sidebar-button {
+    color: #fff; /* Explicitly enforce your color */
+    text-decoration: none; /* Double-check no underline */
+  }
+  
+  /* Main content styles */
+  .main-content {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    padding: 20px; 
+    background-color: #f9fafb;
+  }
+  
+  .toggle-button {
+    align-self: flex-start;
+    margin: 0 0 20px 10px;
+    padding: 8px 16px; /* Larger button */
+    color: #fff;
+    background: linear-gradient(135deg, #5a67d8, #434190); /* Matching sidebar gradient */
+    border: none;
+    border-radius: 50px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    font-size: 0.9em;
+  }
+  
+  .toggle-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  }
+  
+  .board-container {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    flex-grow: 1;
+    padding: 20px;
+    overflow-x: auto;
+    gap: 20px;
+    
+  }
+  
+  /* Column styles */
+  .column {
+    width: 320px;
+    min-width: 320px;
+    padding: 15px;
+    background-color: #ffffff;
+    border-radius: 12px;
+    margin: 0; 
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease;
+  }
+  
+  .column:hover {
+    transform: translateY(-5px); /* Slight lift on hover for interactivity */
+  }
+  
+  .column h3 {
+    text-align: center;
+    margin: 0 0 15px 0; /* More spacing below title */
+    font-size: 1.1em;
+    font-weight: 600;
+    color: #1f2937; /* Darker gray for better contrast */
+  }
+  
+  .droppable {
+    min-height: 500px; /* Adjusted for better proportionality */
+    padding: 15px;
+    background-color: #f3f4f6; /* Light gray for droppable area */
+    border-radius: 8px; /* Softer corners */
+    transition: background-color 0.2s ease; /* Smooth hover effect */
+  }
+  
+  .droppable:hover {
+    background-color: #e5e7eb; /* Slightly darker on hover */
+  }
+  
+  .empty-droppable {
+    display: flex;
+    justify-content: center;
+    align-items: center; /* Center content vertically */
+    padding: 20px;
+    height: 100%;
+    color: #6b7280; /* Muted gray for empty state */
+    font-style: italic;
+  }
+  
+  
