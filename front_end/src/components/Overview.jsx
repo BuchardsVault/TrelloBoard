@@ -6,26 +6,25 @@ import { Link } from 'react-router-dom';
 import './Overview.css';
 
 function Overview() {
-  const containers = ['To Do', 'In Progress', 'Done']; // This is the droppable 
-  const [tickets, setTickets] = useState([]); 
-  const [isSidebarVisible, setIsSidebarVisible] = useState(true); // Side bar
-  const [isModalOpen, setIsModalOpen] = useState(false); // auto default to no popup 
+  const containers = ['To Do', 'In Progress', 'Done'];
+  const [tickets, setTickets] = useState([]);
+  const [isSidebarVisible, setIsSidebarVisible] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [newTicket, setNewTicket] = useState({
     title: '',
-    assignee: '',
+    assignee: 'Unassigned',
     description: ''
   });
-
+  const teamMembers = ['Alice', 'Bob', 'Charlie', 'Unassigned'];
 
   const toggleSidebar = () => {
     setIsSidebarVisible(!isSidebarVisible);
   };
-  
-  // Opens popup window for input and then creates the ticket 
-  const openModal = () => setIsModalOpen(true); 
+
+  const openModal = () => setIsModalOpen(true);
   const closeModal = () => {
     setIsModalOpen(false);
-    setNewTicket({ title: '', assignee: '', description: '' });
+    setNewTicket({ title: '', assignee: 'Unassigned', description: '' });
   };
 
   const handleInputChange = (e) => {
@@ -33,14 +32,13 @@ function Overview() {
     setNewTicket(prev => ({ ...prev, [name]: value }));
   };
 
-  // Instructions to execute when clicking on the create ticket button 
   const handleCreateTicket = (e) => {
     e.preventDefault();
-    if (newTicket.title) { // Basic validation
+    if (newTicket.title) {
       const ticket = {
         id: `ticket-${Date.now()}`,
         ...newTicket,
-        parent: 'To Do' // Places in the To Do droppable 
+        parent: 'To Do'
       };
       setTickets(prevTickets => [...prevTickets, ticket]);
       closeModal();
@@ -66,10 +64,11 @@ function Overview() {
       {isSidebarVisible && (
         <div className="sidebar">
           <h3>Sidebar</h3>
-          <button 
-            className="ticket-button" 
+          <button
+            className="ticket-button"
             type="button"
             onClick={openModal}
+            aria-label="Create a new ticket"
           >
             Create a Ticket
           </button>
@@ -83,7 +82,11 @@ function Overview() {
 
       {/* Main content */}
       <div className="main-content">
-        <button onClick={toggleSidebar} className="toggle-button">
+        <button
+          onClick={toggleSidebar}
+          className="toggle-button"
+          aria-label={isSidebarVisible ? 'Hide sidebar' : 'Show sidebar'}
+        >
           {isSidebarVisible ? 'Hide Sidebar' : 'Show Sidebar'}
         </button>
         <div className="board-container">
@@ -96,15 +99,15 @@ function Overview() {
                     .filter(ticket => ticket.parent === id)
                     .map(ticket => (
                       <Draggable key={ticket.id} id={ticket.id}>
-                        <div className="ticket-card">
+                        <div className="ticket-card" data-parent={ticket.parent}>
                           <h4>{ticket.title}</h4>
-                          <p>Assigned to: {ticket.assignee || 'Unassigned'}</p>
+                          <p>Assigned to: {ticket.assignee}</p>
                           <p>{ticket.description || 'No description'}</p>
                         </div>
                       </Draggable>
                     ))}
                   {tickets.filter(ticket => ticket.parent === id).length === 0 && (
-                    <div className="empty-droppable"></div>
+                    <div className="empty-droppable">No tickets here</div>
                   )}
                 </Droppable>
               </div>
@@ -120,27 +123,34 @@ function Overview() {
             <h2>Create New Ticket</h2>
             <form onSubmit={handleCreateTicket}>
               <div className="form-group">
-                <label>Title:</label>
+                <label htmlFor="title">Title:</label>
                 <input
+                  id="title"
                   type="text"
                   name="title"
                   value={newTicket.title}
                   onChange={handleInputChange}
                   required
+                  aria-required="true"
                 />
               </div>
               <div className="form-group">
-                <label>Assignee:</label>
-                <input
-                  type="text"
+                <label htmlFor="assignee">Assignee:</label>
+                <select
+                  id="assignee"
                   name="assignee"
                   value={newTicket.assignee}
                   onChange={handleInputChange}
-                />
+                >
+                  {teamMembers.map(member => (
+                    <option key={member} value={member}>{member}</option>
+                  ))}
+                </select>
               </div>
               <div className="form-group">
-                <label>Description:</label>
+                <label htmlFor="description">Description:</label>
                 <textarea
+                  id="description"
                   name="description"
                   value={newTicket.description}
                   onChange={handleInputChange}
