@@ -5,6 +5,7 @@ import { Droppable } from './Droppable';
 import { Draggable } from './Draggable';
 import { Link } from 'react-router-dom';
 import './Overview.css';
+import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 
 function Overview() {
   const containers = ['todo', 'in-progress', 'done']; // Match DB enum values
@@ -136,15 +137,12 @@ function Overview() {
       {/* Sidebar - unchanged */}
       {isSidebarVisible && (
         <div className="sidebar">
-          <h3>Sidebar</h3>
-          <button className="ticket-button" type="button" onClick={openModal}>
-            Create a Ticket
+ Ticket
           </button>
-          <button className="sidebar-button">Releases</button>
-          <button className="sidebar-button">Components</button>
-          <button className="sidebar-button">Tickets</button>
-          <Link to="/settings" className="linked-sidebar-button">Settings</Link>
           <Link to="/dashboard" className="linked-sidebar-button">Dashboard</Link>
+          <button className="sidebar-button">All Tickets</button>
+          <Link to="/settings" className="linked-sidebar-button">Settings</Link>
+          
         </div>
       )}
 
@@ -155,7 +153,7 @@ function Overview() {
           className="toggle-button"
           aria-label={isSidebarVisible ? 'Hide sidebar' : 'Show sidebar'}
         >
-          {isSidebarVisible ? 'Hide Sidebar' : 'Show Sidebar'}
+          {isSidebarVisible ? <FaChevronLeft /> : <FaChevronRight />}
         </button>
         <div className="board-container">
           <DndContext onDragEnd={handleDragEnd}>
