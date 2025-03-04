@@ -134,17 +134,26 @@ function Overview() {
 
   return (
     <div className="container">
-      {/* Sidebar - unchanged */}
+             {/* Sidebar */}
       {isSidebarVisible && (
         <div className="sidebar">
- Ticket
+    
+          <button
+            className="ticket-button"
+            type="button"
+            onClick={openModal}
+            aria-label="Create a new ticket"
+          >
+            Create a Ticket
           </button>
+          <Link to="/settings" className="linked-sidebar-button">Settings</Link>
           <Link to="/dashboard" className="linked-sidebar-button">Dashboard</Link>
           <button className="sidebar-button">All Tickets</button>
           <Link to="/settings" className="linked-sidebar-button">Settings</Link>
           
         </div>
       )}
+
 
       {/* Main content */}
       <div className="main-content">
