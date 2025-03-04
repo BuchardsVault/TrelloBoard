@@ -1,21 +1,62 @@
 import { DndContext } from '@dnd-kit/core';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Droppable } from './Droppable';
 import { Draggable } from './Draggable';
 import { Link } from 'react-router-dom';
 import './Overview.css';
 
 function Overview() {
-  const containers = ['To Do', 'In Progress', 'Done'];
+  const containers = ['todo', 'in-progress', 'done']; // Match DB enum values
   const [tickets, setTickets] = useState([]);
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newTicket, setNewTicket] = useState({
     title: '',
-    assignee: 'Unassigned',
-    description: ''
+    designee: 'Unassigned',
+    description: '',
+    priority: 1 // Added priority as per DB schema
   });
-  const teamMembers = ['Alice', 'Bob', 'Charlie', 'Unassigned'];
+  const [teamMembers, setTeamMembers] = useState([]);
+
+  // Base API URL - adjust this to your backend endpoint
+  const API_URL = 'http://localhost:3000/api'; // Change this to your actual API URL
+
+  // Fetch initial data
+  useEffect(() => {
+    fetchTickets();
+    fetchTeamMembers();
+  }, []);
+
+  const fetchTickets = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/cards`);
+      // Map DB fields to match frontend structure
+      const mappedTickets = response.data.map(ticket => ({
+        id: ticket.id.toString(),
+        title: ticket.title,
+        description: ticket.description,
+        assignee: ticket.designee,
+        parent: ticket.status,
+        priority: ticket.priority
+      }));
+      setTickets(mappedTickets);
+    } catch (error) {
+      console.error('Error fetching tickets:', error);
+    }
+  };
+
+  const fetchTeamMembers = async () => {
+    try {
+      // Assuming you have an endpoint for users
+      const response = await axios.get(`${API_URL}/users`);
+      const members = response.data.map(user => user.name); // Adjust based on your users table
+      setTeamMembers([...members, 'Unassigned']);
+    } catch (error) {
+      console.error('Error fetching team members:', error);
+      setTeamMembers(['Donald Trump', 'Kamala Harris', 'Unassigned']); // Fallback
+    }
+  };
 
   const toggleSidebar = () => {
     setIsSidebarVisible(!isSidebarVisible);
@@ -24,7 +65,12 @@ function Overview() {
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => {
     setIsModalOpen(false);
-    setNewTicket({ title: '', assignee: 'Unassigned', description: '' });
+    setNewTicket({ 
+      title: '', 
+      designee: 'Unassigned', 
+      description: '', 
+      priority: 1 
+    });
   };
 
   const handleInputChange = (e) => {
@@ -32,44 +78,66 @@ function Overview() {
     setNewTicket(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleCreateTicket = (e) => {
+  const handleCreateTicket = async (e) => {
     e.preventDefault();
-    if (newTicket.title) {
-      const ticket = {
-        id: `ticket-${Date.now()}`,
-        ...newTicket,
-        parent: 'To Do'
+    if (!newTicket.title) return;
+
+    const ticketData = {
+      title: newTicket.title,
+      description: newTicket.description || null,
+      priority: parseInt(newTicket.priority),
+      status: 'todo',
+      author: 'current_user', // Replace with actual authenticated user
+      designee: newTicket.designee === 'Unassigned' ? null : newTicket.designee
+    };
+
+    try {
+      const response = await axios.post(`${API_URL}/cards`, ticketData);
+      const createdTicket = {
+        id: response.data.id.toString(),
+        title: response.data.title,
+        description: response.data.description,
+        assignee: response.data.designee,
+        parent: response.data.status,
+        priority: response.data.priority
       };
-      setTickets(prevTickets => [...prevTickets, ticket]);
+      setTickets(prevTickets => [...prevTickets, createdTicket]);
       closeModal();
+    } catch (error) {
+      console.error('Error creating ticket:', error);
     }
   };
 
-  function handleDragEnd(event) {
+  const handleDragEnd = async (event) => {
     const { active, over } = event;
-    if (over) {
-      setTickets(prevTickets =>
-        prevTickets.map(ticket =>
-          ticket.id === active.id
-            ? { ...ticket, parent: over.id }
-            : ticket
-        )
-      );
+    if (!over || active.id === over.id) return;
+
+    try {
+      const ticketToUpdate = tickets.find(t => t.id === active.id);
+      if (ticketToUpdate) {
+        const updatedTicket = { ...ticketToUpdate, parent: over.id };
+        await axios.put(`${API_URL}/cards/${active.id}`, {
+          status: over.id
+        });
+        
+        setTickets(prevTickets =>
+          prevTickets.map(ticket =>
+            ticket.id === active.id ? updatedTicket : ticket
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Error updating ticket status:', error);
     }
-  }
+  };
 
   return (
     <div className="container">
-      {/* Sidebar */}
+      {/* Sidebar - unchanged */}
       {isSidebarVisible && (
         <div className="sidebar">
           <h3>Sidebar</h3>
-          <button
-            className="ticket-button"
-            type="button"
-            onClick={openModal}
-            aria-label="Create a new ticket"
-          >
+          <button className="ticket-button" type="button" onClick={openModal}>
             Create a Ticket
           </button>
           <button className="sidebar-button">Releases</button>
@@ -93,7 +161,7 @@ function Overview() {
           <DndContext onDragEnd={handleDragEnd}>
             {containers.map((id) => (
               <div key={id} className="column">
-                <h3>{id}</h3>
+                <h3>{id.charAt(0).toUpperCase() + id.slice(1).replace('-', ' ')}</h3>
                 <Droppable id={id} className="droppable">
                   {tickets
                     .filter(ticket => ticket.parent === id)
@@ -101,8 +169,9 @@ function Overview() {
                       <Draggable key={ticket.id} id={ticket.id}>
                         <div className="ticket-card" data-parent={ticket.parent}>
                           <h4>{ticket.title}</h4>
-                          <p>Assigned to: {ticket.assignee}</p>
+                          <p>Assigned to: {ticket.assignee || 'Unassigned'}</p>
                           <p>{ticket.description || 'No description'}</p>
+                          <p>Priority: {ticket.priority}</p>
                         </div>
                       </Draggable>
                     ))}
@@ -131,21 +200,32 @@ function Overview() {
                   value={newTicket.title}
                   onChange={handleInputChange}
                   required
-                  aria-required="true"
                 />
               </div>
               <div className="form-group">
-                <label htmlFor="assignee">Assignee:</label>
+                <label htmlFor="designee">Assignee:</label>
                 <select
-                  id="assignee"
-                  name="assignee"
-                  value={newTicket.assignee}
+                  id="designee"
+                  name="designee"
+                  value={newTicket.designee}
                   onChange={handleInputChange}
                 >
                   {teamMembers.map(member => (
                     <option key={member} value={member}>{member}</option>
                   ))}
                 </select>
+              </div>
+              <div className="form-group">
+                <label htmlFor="priority">Priority:</label>
+                <input
+                  id="priority"
+                  type="number"
+                  name="priority"
+                  value={newTicket.priority}
+                  onChange={handleInputChange}
+                  min="1"
+                  required
+                />
               </div>
               <div className="form-group">
                 <label htmlFor="description">Description:</label>
