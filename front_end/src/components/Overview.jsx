@@ -8,22 +8,21 @@ import './Overview.css';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 
 function Overview() {
-  const containers = ['todo', 'in-progress', 'done']; // Match DB enum values
+  const containers = ['todo', 'in-progress', 'done'];
   const [tickets, setTickets] = useState([]);
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newTicket, setNewTicket] = useState({
     title: '',
-    designee: 'Unassigned',
+    designee_id: null, // Changed to ID, null for unassigned
     description: '',
-    priority: 1 // Added priority as per DB schema
+    priority: 1
   });
-  const [teamMembers, setTeamMembers] = useState([]);
+  const [teamMembers, setTeamMembers] = useState([]); // Will store {id, name} objects
 
-  // Base API URL - adjust this to your backend endpoint
-  const API_URL = 'http://localhost:3000/api'; // Change this to your actual API URL
+  // Update API URL to use backend 3001 
+  const API_URL = 'http://localhost:3001/api';
 
-  // Fetch initial data
   useEffect(() => {
     fetchTickets();
     fetchTeamMembers();
@@ -32,12 +31,12 @@ function Overview() {
   const fetchTickets = async () => {
     try {
       const response = await axios.get(`${API_URL}/cards`);
-      // Map DB fields to match frontend structure
       const mappedTickets = response.data.map(ticket => ({
         id: ticket.id.toString(),
         title: ticket.title,
         description: ticket.description,
-        assignee: ticket.designee,
+        assignee: ticket.designee, // This will be the name from the joined query
+        assigneeId: ticket.designee_id, // Store ID for updates
         parent: ticket.status,
         priority: ticket.priority
       }));
@@ -49,13 +48,16 @@ function Overview() {
 
   const fetchTeamMembers = async () => {
     try {
-      // Assuming you have an endpoint for users
       const response = await axios.get(`${API_URL}/users`);
-      const members = response.data.map(user => user.name); // Adjust based on your users table
-      setTeamMembers([...members, 'Unassigned']);
+      // Expecting array of {id, name} objects
+      setTeamMembers(response.data);
     } catch (error) {
       console.error('Error fetching team members:', error);
-      setTeamMembers(['Donald Trump', 'Kamala Harris', 'Unassigned']); // Fallback
+      setTeamMembers([
+        { id: 1, name: 'Donald Trump' },
+        { id: 2, name: 'Kamala Harris' },
+        { id: 3, name: 'Unassigned' }
+      ]);
     }
   };
 
@@ -68,7 +70,7 @@ function Overview() {
     setIsModalOpen(false);
     setNewTicket({ 
       title: '', 
-      designee: 'Unassigned', 
+      designee_id: null, 
       description: '', 
       priority: 1 
     });
@@ -76,7 +78,10 @@ function Overview() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setNewTicket(prev => ({ ...prev, [name]: value }));
+    setNewTicket(prev => ({ 
+      ...prev, 
+      [name]: name === 'designee_id' ? (value === '' ? null : parseInt(value)) : value 
+    }));
   };
 
   const handleCreateTicket = async (e) => {
@@ -88,8 +93,8 @@ function Overview() {
       description: newTicket.description || null,
       priority: parseInt(newTicket.priority),
       status: 'todo',
-      author: 'current_user', // Replace with actual authenticated user
-      designee: newTicket.designee === 'Unassigned' ? null : newTicket.designee
+      author_id: 1, // You'll need to get this from auth context
+      designee_id: newTicket.designee_id
     };
 
     try {
@@ -98,7 +103,8 @@ function Overview() {
         id: response.data.id.toString(),
         title: response.data.title,
         description: response.data.description,
-        assignee: response.data.designee,
+        assignee: teamMembers.find(m => m.id === response.data.designee_id)?.name || 'Unassigned',
+        assigneeId: response.data.designee_id,
         parent: response.data.status,
         priority: response.data.priority
       };
@@ -120,7 +126,6 @@ function Overview() {
         await axios.put(`${API_URL}/cards/${active.id}`, {
           status: over.id
         });
-        
         setTickets(prevTickets =>
           prevTickets.map(ticket =>
             ticket.id === active.id ? updatedTicket : ticket
@@ -134,28 +139,18 @@ function Overview() {
 
   return (
     <div className="container">
-             {/* Sidebar */}
       {isSidebarVisible && (
         <div className="sidebar">
-    
-          <button
-            className="ticket-button"
-            type="button"
-            onClick={openModal}
-            aria-label="Create a new ticket"
-          >
+          <button className="ticket-button" onClick={openModal}>
             Create a Ticket
           </button>
           <Link to="/settings" className="linked-sidebar-button">Settings</Link>
           <Link to="/dashboard" className="linked-sidebar-button">Dashboard</Link>
           <button className="sidebar-button">All Tickets</button>
           <Link to="/settings" className="linked-sidebar-button">Settings</Link>
-          
         </div>
       )}
 
-
-      {/* Main content */}
       <div className="main-content">
         <button
           onClick={toggleSidebar}
@@ -192,7 +187,6 @@ function Overview() {
         </div>
       </div>
 
-      {/* Modal for ticket creation */}
       {isModalOpen && (
         <div className="modal-overlay">
           <div className="modal">
@@ -210,15 +204,16 @@ function Overview() {
                 />
               </div>
               <div className="form-group">
-                <label htmlFor="designee">Assignee:</label>
+                <label htmlFor="designee_id">Assignee:</label>
                 <select
-                  id="designee"
-                  name="designee"
-                  value={newTicket.designee}
+                  id="designee_id"
+                  name="designee_id"
+                  value={newTicket.designee_id || ''}
                   onChange={handleInputChange}
                 >
+                  <option value="">Unassigned</option>
                   {teamMembers.map(member => (
-                    <option key={member} value={member}>{member}</option>
+                    <option key={member.id} value={member.id}>{member.name}</option>
                   ))}
                 </select>
               </div>
