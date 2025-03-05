@@ -78,13 +78,13 @@ CREATE INDEX idx_author_id ON cards(author_id);
 
 3. Startup your mySQL instance and ensure that it is running on the local port (Default is 3306)
 
-### Open two seperate terminals, one to spin up the server on the backend, one to spin up the front end
+4. Open two seperate terminals, one to spin up the server on the backend, one to spin up the front end
 
 #### Server Side Spin Up
-
-    Navigate to TrelloBoard/back_end
-    run this command: `node server_localtest.js`
-    You should see the output "Server running on port xxxx" if it was successful
+` cd TrelloBoard/back_end
+  node server_localtest.js `
+  
+You should see the output "Server running on port xxxx" if it was successful
 
 #### Front End Spin Up
 
