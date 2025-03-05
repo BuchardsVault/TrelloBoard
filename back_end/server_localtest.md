@@ -74,9 +74,9 @@ CREATE INDEX idx_author_id ON cards(author_id);
 
 ```
 
-### Next open `server_localtest.js` on local file and alter lines 10 - 13 to match your username, password, port of your mySQL instance
+2. Next open `server_localtest.js` on local file and alter lines 10 - 13 to match your username, password, port of your mySQL instance
 
-### Startup your mySQL instance and ensure that it is running on the local port (Default is 3306)
+3. Startup your mySQL instance and ensure that it is running on the local port (Default is 3306)
 
 ### Open two seperate terminals, one to spin up the server on the backend, one to spin up the front end
 
