@@ -81,8 +81,8 @@ CREATE INDEX idx_author_id ON cards(author_id);
 4. Open two seperate terminals, one to spin up the server on the backend, one to spin up the front end
 
 #### Server Side Spin Up
-` cd TrelloBoard/back_end
-  node server_localtest.js `
+`cd TrelloBoard/back_end`
+`node server_localtest.js`
   
 You should see the output "Server running on port xxxx" if it was successful
 
