@@ -83,13 +83,11 @@ CREATE INDEX idx_author_id ON cards(author_id);
 #### Server Side Spin Up
 `cd TrelloBoard/back_end`
 `node server_localtest.js`
-  
-You should see the output "Server running on port xxxx" if it was successful
+You should see the output *Server running on port xxxx* if it was successful
 
 #### Front End Spin Up
-
-    Navigate to TrelloBoard/front_end
-    run this command: `npm start`
+'cd TrelloBoard/front_end'
+'npm start' 
     You should see the following output:
         You can now view front_end in the browser.
 
