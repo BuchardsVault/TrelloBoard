@@ -1,55 +1,56 @@
 ## First create a mySQL database locally using the following SQL commands
 
+```sql
 -- Create the database
 CREATE DATABASE IF NOT EXISTS ticket_management;
 USE ticket_management;
 
 -- Create users table for team members
 CREATE TABLE users (
-id INT PRIMARY KEY AUTO_INCREMENT,
-name VARCHAR(100) NOT NULL,
-email VARCHAR(100) UNIQUE,
-created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Create cards (tickets) table
 CREATE TABLE cards (
-id INT PRIMARY KEY AUTO_INCREMENT,
-title VARCHAR(200) NOT NULL,
-description TEXT,
-priority INT NOT NULL DEFAULT 1,
-status ENUM('todo', 'in-progress', 'done') NOT NULL DEFAULT 'todo',
-author_id INT NOT NULL, -- Changed to reference user id
-designee_id INT, -- Changed to reference user id, nullable for unassigned
-created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE RESTRICT,
-FOREIGN KEY (designee_id) REFERENCES users(id) ON DELETE SET NULL
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    title VARCHAR(200) NOT NULL,
+    description TEXT,
+    priority INT NOT NULL DEFAULT 1,
+    status ENUM('todo', 'in-progress', 'done') NOT NULL DEFAULT 'todo',
+    author_id INT NOT NULL,  -- Changed to reference user id
+    designee_id INT,        -- Changed to reference user id, nullable for unassigned
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE RESTRICT,
+    FOREIGN KEY (designee_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
 -- Insert some initial team members
 INSERT INTO users (name, email) VALUES
-('Donald Trump', 'donald@example.com'),
-('Kamala Harris', 'kamala@example.com'),
-('Unassigned', NULL);
+    ('Donald Trump', 'donald@example.com'),
+    ('Kamala Harris', 'kamala@example.com'),
+    ('Unassigned', NULL);
 
 -- Insert some sample tickets
 INSERT INTO cards (title, description, priority, status, author_id, designee_id) VALUES
-('Fix login bug', 'Users cannot login with special characters', 2, 'todo', 1, 2),
-('Update UI', 'Redesign dashboard layout', 1, 'in-progress', 2, 1),
-('Database optimization', 'Improve query performance', 3, 'done', 1, NULL);
+    ('Fix login bug', 'Users cannot login with special characters', 2, 'todo', 1, 2),
+    ('Update UI', 'Redesign dashboard layout', 1, 'in-progress', 2, 1),
+    ('Database optimization', 'Improve query performance', 3, 'done', 1, NULL);
 
 -- Useful queries for your API endpoints:
 
 -- Get all tickets with user names (for fetchTickets)
 SELECT
-c.id,
-c.title,
-c.description,
-c.priority,
-c.status,
-u1.name AS author,
-u2.name AS designee
+    c.id,
+    c.title,
+    c.description,
+    c.priority,
+    c.status,
+    u1.name AS author,
+    u2.name AS designee
 FROM cards c
 LEFT JOIN users u1 ON c.author_id = u1.id
 LEFT JOIN users u2 ON c.designee_id = u2.id;
@@ -69,19 +70,21 @@ CREATE INDEX idx_status ON cards(status);
 CREATE INDEX idx_designee_id ON cards(designee_id);
 CREATE INDEX idx_author_id ON cards(author_id);
 
-## Next open `server_localtest.js` on local file and alter lines 10 - 13 to match your username, password, port of your mySQL instance
+```
 
-## Startup your mySQL instance and ensure that it is running on the local port (Default is 3306)
+### Next open `server_localtest.js` on local file and alter lines 10 - 13 to match your username, password, port of your mySQL instance
 
-## Open two seperate terminals, one to spin up the server on the backend, one to spin up the front end
+### Startup your mySQL instance and ensure that it is running on the local port (Default is 3306)
 
-### Server Side Spin Up
+### Open two seperate terminals, one to spin up the server on the backend, one to spin up the front end
+
+#### Server Side Spin Up
 
     Navigate to TrelloBoard/back_end
     run this command: `node server_localtest.js`
     You should see the output "Server running on port xxxx" if it was successful
 
-### Front End Spin Up
+#### Front End Spin Up
 
     Navigate to TrelloBoard/front_end
     run this command: `npm start`
