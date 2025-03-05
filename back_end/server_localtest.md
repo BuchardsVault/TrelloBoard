@@ -1,4 +1,6 @@
-## First create a mySQL database locally using the following SQL commands
+## Creating a local DB and then testing out front end functions 
+
+1. Create a mySQL database using either mySQL workbench or command line
 
 ```sql
 -- Create the database
