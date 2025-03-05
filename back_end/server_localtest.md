@@ -81,22 +81,20 @@ CREATE INDEX idx_author_id ON cards(author_id);
 4. Open two seperate terminals, one to spin up the server on the backend, one to spin up the front end
 
 #### Server Side Spin Up
-`cd TrelloBoard/back_end`
-`node server_localtest.js`
+`cd TrelloBoard/back_end && node server_localtest.js`
 You should see the output *Server running on port xxxx* if it was successful
 
 #### Front End Spin Up
-'cd TrelloBoard/front_end'
-'npm start' 
-    You should see the following output:
-        You can now view front_end in the browser.
+'cd TrelloBoard/front_end && npm start' 
+You should see the following output:
+> You can now view front_end in the browser.
 
-Local: http://localhost:3000
-On Your Network: http://192.168.0.235:3000
+>Local: http://localhost:3000
+>On Your Network: http://192.168.0.235:3000
 
-Note that the development build is not optimized.
-To create a production build, use npm run build.
+>Note that the development build is not optimized.
+>To create a production build, use npm run build.
 
-webpack compiled successfully
+>webpack compiled successfully
 
-Once your browser (Chrome) launches the app, in the url append the URL to be http://localhost:3000/overview , this will bypass the login page for now.
+>Once your browser (Chrome) launches the app, in the url append the URL to be http://localhost:3000/overview , this >will bypass the login page for now.
