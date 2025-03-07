@@ -1,8 +1,6 @@
-## Creating a local DB and then testing out front end functions 
+## First create a mySQL database locally using the following SQL commands
 
-1. Create a mySQL database using either mySQL workbench or command line
 
-```sql
 -- Create the database
 CREATE DATABASE IF NOT EXISTS ticket_management;
 USE ticket_management;
@@ -45,7 +43,7 @@ INSERT INTO cards (title, description, priority, status, author_id, designee_id)
 -- Useful queries for your API endpoints:
 
 -- Get all tickets with user names (for fetchTickets)
-SELECT
+SELECT 
     c.id,
     c.title,
     c.description,
@@ -72,29 +70,27 @@ CREATE INDEX idx_status ON cards(status);
 CREATE INDEX idx_designee_id ON cards(designee_id);
 CREATE INDEX idx_author_id ON cards(author_id);
 
-```
+## Next open `server_localtest.js` on local file and alter lines 10 - 13 to match your username, password, port of your mySQL instance 
 
-2. Next open `server_localtest.js` on local file and alter lines 10 - 13 to match your username, password, port of your mySQL instance
+## Startup your mySQL instance and ensure that it is running on the local port (Default is 3306) 
+## Open two seperate terminals, one to spin up the server on the backend, one to spin up the front end 
+### Server Side Spin Up 
+    Navigate to TrelloBoard/back_end 
+    run this command: `node server_localtest.js` 
+    You should see the output "Server running on port xxxx" if it was successful 
+### Front End Spin Up 
+    Navigate to TrelloBoard/front_end
+    run this command: `npm start` 
+    You should see the following output: 
+        You can now view front_end in the browser.
 
-3. Startup your mySQL instance and ensure that it is running on the local port (Default is 3306)
+  Local:            http://localhost:3000
+  On Your Network:  http://192.168.0.235:3000
 
-4. Open two seperate terminals, one to spin up the server on the backend, one to spin up the front end
+Note that the development build is not optimized.
+To create a production build, use npm run build.
 
-#### Server Side Spin Up
-`cd TrelloBoard/back_end && node server_localtest.js`
-You should see the output *Server running on port xxxx* if it was successful
+webpack compiled successfully
 
-#### Front End Spin Up
-'cd TrelloBoard/front_end && npm start' 
-You should see the following output:
-> You can now view front_end in the browser.
+Once your browser (Chrome) launches the app, in the url append the URL to be http://localhost:3000/overview , this will bypass the login page for now. 
 
->Local: http://localhost:3000
->On Your Network: http://192.168.0.235:3000
-
->Note that the development build is not optimized.
->To create a production build, use npm run build.
-
->webpack compiled successfully
-
->Once your browser (Chrome) launches the app, in the url append the URL to be http://localhost:3000/overview , this >will bypass the login page for now.

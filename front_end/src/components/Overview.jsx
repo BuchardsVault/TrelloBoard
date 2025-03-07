@@ -70,7 +70,7 @@ function Overview() {
     setIsModalOpen(false);
     setNewTicket({
       title: '',
-      designee: 'Unassigned',
+      designee_id: null,
       description: '',
       priority: 1
     });
@@ -139,37 +139,19 @@ function Overview() {
 
   return (
     <div className="container">
-<<<<<<< HEAD
-=======
-             {/* Sidebar */}
->>>>>>> 2770d9eb (Puhs)
       {isSidebarVisible && (
         <div className="sidebar">
-<<<<<<< HEAD
-=======
-    
->>>>>>> 5d6389e2 (Puhs)
-          <button
-            className="ticket-button"
-            type="button"
-            onClick={openModal}
-            aria-label="Create a new ticket"
-          >
+          <button className="ticket-button" onClick={openModal}>
             Create a Ticket
           </button>
           <Link to="/settings" className="linked-sidebar-button">Settings</Link>
           <Link to="/dashboard" className="linked-sidebar-button">Dashboard</Link>
           <button className="sidebar-button">All Tickets</button>
           <Link to="/settings" className="linked-sidebar-button">Settings</Link>
+        </div >
+      )
+      }
 
-        </div>
-      )}
-
-<<<<<<< HEAD
-=======
-
-      {/* Main content */}
->>>>>>> 2770d9eb (Puhs)
       <div className="main-content">
         <button
           onClick={toggleSidebar}
@@ -206,66 +188,68 @@ function Overview() {
         </div>
       </div>
 
-      {isModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <h2>Create New Ticket</h2>
-            <form onSubmit={handleCreateTicket}>
-              <div className="form-group">
-                <label htmlFor="title">Title:</label>
-                <input
-                  id="title"
-                  type="text"
-                  name="title"
-                  value={newTicket.title}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="designee_id">Assignee:</label>
-                <select
-                  id="designee_id"
-                  name="designee_id"
-                  value={newTicket.designee_id || ''}
-                  onChange={handleInputChange}
-                >
-                  <option value="">Unassigned</option>
-                  {teamMembers.map(member => (
-                    <option key={member.id} value={member.id}>{member.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-group">
-                <label htmlFor="priority">Priority:</label>
-                <input
-                  id="priority"
-                  type="number"
-                  name="priority"
-                  value={newTicket.priority}
-                  onChange={handleInputChange}
-                  min="1"
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="description">Description:</label>
-                <textarea
-                  id="description"
-                  name="description"
-                  value={newTicket.description}
-                  onChange={handleInputChange}
-                />
-              </div>
-              <div className="modal-buttons">
-                <button type="submit" className="submit-button">Create</button>
-                <button type="button" onClick={closeModal} className="cancel-button">Cancel</button>
-              </div>
-            </form>
+      {
+        isModalOpen && (
+          <div className="modal-overlay">
+            <div className="modal">
+              <h2>Create New Ticket</h2>
+              <form onSubmit={handleCreateTicket}>
+                <div className="form-group">
+                  <label htmlFor="title">Title:</label>
+                  <input
+                    id="title"
+                    type="text"
+                    name="title"
+                    value={newTicket.title}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="designee_id">Assignee:</label>
+                  <select
+                    id="designee_id"
+                    name="designee_id"
+                    value={newTicket.designee_id || ''}
+                    onChange={handleInputChange}
+                  >
+                    <option value="">Unassigned</option>
+                    {teamMembers.map(member => (
+                      <option key={member.id} value={member.id}>{member.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="priority">Priority:</label>
+                  <input
+                    id="priority"
+                    type="number"
+                    name="priority"
+                    value={newTicket.priority}
+                    onChange={handleInputChange}
+                    min="1"
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="description">Description:</label>
+                  <textarea
+                    id="description"
+                    name="description"
+                    value={newTicket.description}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div className="modal-buttons">
+                  <button type="submit" className="submit-button">Create</button>
+                  <button type="button" onClick={closeModal} className="cancel-button">Cancel</button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 }
 
