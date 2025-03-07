@@ -68,19 +68,19 @@ function Overview() {
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => {
     setIsModalOpen(false);
-    setNewTicket({ 
-      title: '', 
-      designee_id: null, 
-      description: '', 
-      priority: 1 
+    setNewTicket({
+      title: '',
+      designee: 'Unassigned',
+      description: '',
+      priority: 1
     });
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setNewTicket(prev => ({ 
-      ...prev, 
-      [name]: name === 'designee_id' ? (value === '' ? null : parseInt(value)) : value 
+    setNewTicket(prev => ({
+      ...prev,
+      [name]: name === 'designee_id' ? (value === '' ? null : parseInt(value)) : value
     }));
   };
 
@@ -141,13 +141,18 @@ function Overview() {
     <div className="container">
       {isSidebarVisible && (
         <div className="sidebar">
-          <button className="ticket-button" onClick={openModal}>
+          <button
+            className="ticket-button"
+            type="button"
+            onClick={openModal}
+            aria-label="Create a new ticket"
+          >
             Create a Ticket
           </button>
-          <Link to="/settings" className="linked-sidebar-button">Settings</Link>
           <Link to="/dashboard" className="linked-sidebar-button">Dashboard</Link>
           <button className="sidebar-button">All Tickets</button>
           <Link to="/settings" className="linked-sidebar-button">Settings</Link>
+
         </div>
       )}
 
