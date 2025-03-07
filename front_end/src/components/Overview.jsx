@@ -139,8 +139,16 @@ function Overview() {
 
   return (
     <div className="container">
+<<<<<<< HEAD
+=======
+             {/* Sidebar */}
+>>>>>>> 2770d9eb (Puhs)
       {isSidebarVisible && (
         <div className="sidebar">
+<<<<<<< HEAD
+=======
+    
+>>>>>>> 5d6389e2 (Puhs)
           <button
             className="ticket-button"
             type="button"
@@ -149,6 +157,7 @@ function Overview() {
           >
             Create a Ticket
           </button>
+          <Link to="/settings" className="linked-sidebar-button">Settings</Link>
           <Link to="/dashboard" className="linked-sidebar-button">Dashboard</Link>
           <button className="sidebar-button">All Tickets</button>
           <Link to="/settings" className="linked-sidebar-button">Settings</Link>
@@ -156,6 +165,11 @@ function Overview() {
         </div>
       )}
 
+<<<<<<< HEAD
+=======
+
+      {/* Main content */}
+>>>>>>> 2770d9eb (Puhs)
       <div className="main-content">
         <button
           onClick={toggleSidebar}
