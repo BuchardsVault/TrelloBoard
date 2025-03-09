@@ -29,12 +29,12 @@ const Card = {
 	},
 
 	addCard: async (cardData) => {
-		const sqlAdd = `
+		const sqlInsertNewCard = `
 			INSERT INTO cards (title, description, priority, status, author_id, designee_id)
 			VALUES (?, ?, ?, ?, ?, ?)
 		`;
 
-		const sqlInsert = `
+		const sqlGetNewCard = `
 			SELECT 
 				c.id,
 				c.title,
@@ -61,8 +61,8 @@ const Card = {
 		];
 
 		try {
-			const newCard = await db.query(sqlAdd, cardValues);
-			const results = await db.query(sqlInsert, [newCard.insertId]);
+			const newCard = await db.query(sqlInsertNewCard, cardValues);
+			const results = await db.query(sqlGetNewCard, [newCard.insertId]);
 			return results;
 		} catch (err) {
 			console.error('Error in addCard:', err);
