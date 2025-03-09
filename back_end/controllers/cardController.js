@@ -18,7 +18,6 @@ getCards = async (req, res) => {
 addCard = async (req, res) => {
 	try {
 		const cardData = req.body;
-		console.log('Inserting Card:', cardData);
 		await Card.addCard(cardData);
 		res.json({ message: 'Card added successfully' });
 	} catch (err) {

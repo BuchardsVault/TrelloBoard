@@ -20,7 +20,7 @@ const Card = {
 
 		try {
 			const results = await db.query(sqlGet);
-			console.log('Results:', results);
+			console.log('Results: ', results);
 			return results;
 		} catch (err) {
 			console.error('Error in getCards:', err);
@@ -63,25 +63,12 @@ const Card = {
 		try {
 			const newCard = await db.query(sqlAdd, cardValues);
 			const results = await db.query(sqlInsert, [newCard.insertId]);
-
-			console.log('Insert result:', results);
 			return results;
 		} catch (err) {
 			console.error('Error in addCard:', err);
 			throw err;
 		}
 	},
-
-	getDatabase: async () => {
-		try {
-			const results = await db.query('SELECT DATABASE();');
-			console.log('Results:', results);
-			return results;
-		} catch (err) {
-			console.error('Error in getDatabase:', err);
-			throw err;
-		}
-	}
 };
 
 module.exports = Card;
