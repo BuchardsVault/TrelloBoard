@@ -27,12 +27,24 @@ const Card = {
 	},
 
 	addCard: async (cardData) => {
+		const sql = `INSERT INTO cards (title, description, priority, status, author_id, designee_id)
+					 VALUES (?, ?, ?, ?, ?, ?)`
+		const values = [
+			cardData.title,
+			cardData.description,
+			cardData.priority,
+			cardData.status,
+			cardData.author_id,
+			cardData.designee_id
+		]
+
 		try {
-			// TODO: Match fields with the columns in the Cards table.
-			// const sql = `INSERT INTO <table_name> (___, ___, ___) VALUES (?, ?, ?)`;
-			// const result = await db.query(sql, [cardData.___, cardData.___, cardData.___]);
-			console.log('Insert result:', result);
-			return result;
+			const results = await db.query(sql, values)
+
+			// TODO: Add function that inserts the card into the cards table.
+
+			console.log('Insert result:', results);
+			return results;
 		} catch (err) {
 			console.error('Error in addCard:', err);
 			throw err;
