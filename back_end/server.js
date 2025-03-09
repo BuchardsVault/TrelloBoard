@@ -5,6 +5,7 @@ const cardRoutes = require('./routes/cardRoutes')
 const PORT = 3000; // Or your chosen port
 const HOST = '0.0.0.0'; // Accepts external connections
 
+app.use(express.json());
 app.use("/api/cards", cardRoutes);
 
 app.listen(PORT, HOST, () => {
