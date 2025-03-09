@@ -11,7 +11,8 @@ getCards = async (req, res) => {
 		const cards = await Card.getCards();
 		res.json(cards);
 	} catch (err) {
-		res.status(500).json({ error: 'Database error' });
+		console.error('Retrieval Error:', err);
+		res.status(500).json({ error: 'Failed to get cards' });
 	}
 };
 
@@ -26,8 +27,23 @@ addCard = async (req, res) => {
 	}
 };
 
+updateCard = async (req, res) => {
+	try {
+		const cardData = {
+			id: req.params.id,
+			status: req.body.status,
+		};
+
+		await Card.updateCard(cardData);
+		res.json({ message: 'Card updated successfully' });
+	} catch (err) {
+		console.error('Update Error:', err);
+		res.status(500).json({ error: 'Failed to update card' });
+	}
+};
+
 module.exports = {
 	getCards,
 	addCard,
-	getDatabase
+	updateCard
 };

@@ -5,9 +5,9 @@ const cardController = require('../controllers/cardController');
 router.route('/')
 	.get(cardController.getCards)
 	.post(cardController.addCard);
-//.put()
+
+router.route('/:id')
+	.put(cardController.updateCard);
 //.delete();
 
 module.exports = router;
-
-console.log(cardController);

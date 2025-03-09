@@ -69,6 +69,19 @@ const Card = {
 			throw err;
 		}
 	},
+
+	// TODO: Refactor to `updateStatus`.
+	updateCard: async (cardData) => {
+		const sqlUpdate = `UPDATE cards SET status = ? WHERE id = ?`;
+		const args = [cardData.status, cardData.id]
+		try {
+			const results = await db.query(sqlUpdate, args);
+			return results;
+		} catch (err) {
+			console.error('Error in updateCard:', err);
+			throw err;
+		}
+	},
 };
 
 module.exports = Card;
