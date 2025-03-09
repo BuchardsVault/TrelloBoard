@@ -2,22 +2,24 @@ const db = require('../config/db');
 
 const Card = {
 	getCards: async () => {
-		const sql = `SELECT 
-						c.id,
-						c.title,
-						c.description,
-						c.priority,
-						c.status,
-						u1.name AS author,
-						u2.name AS designee,
-						c.author_id,
-						c.designee_id
-						FROM cards c
-						LEFT JOIN users u1 ON c.author_id = u1.id
-						LEFT JOIN users u2 ON c.designee_id = u2.id`
+		const sqlGet = `
+			SELECT 
+				c.id,
+				c.title,
+				c.description,
+				c.priority,
+				c.status,
+				u1.name AS author,
+				u2.name AS designee,
+				c.author_id,
+				c.designee_id
+			FROM cards c
+			LEFT JOIN users u1 ON c.author_id = u1.id
+			LEFT JOIN users u2 ON c.designee_id = u2.id
+		`;
 
 		try {
-			const results = await db.query(sql);
+			const results = await db.query(sqlGet);
 			console.log('Results:', results);
 			return results;
 		} catch (err) {
@@ -27,21 +29,40 @@ const Card = {
 	},
 
 	addCard: async (cardData) => {
-		const sql = `INSERT INTO cards (title, description, priority, status, author_id, designee_id)
-					 VALUES (?, ?, ?, ?, ?, ?)`
-		const values = [
+		const sqlAdd = `
+			INSERT INTO cards (title, description, priority, status, author_id, designee_id)
+			VALUES (?, ?, ?, ?, ?, ?)
+		`;
+
+		const sqlInsert = `
+			SELECT 
+				c.id,
+				c.title,
+				c.description,
+				c.priority,
+				c.status,
+				u1.name AS author,
+				u2.name AS designee,
+				c.author_id,
+				c.designee_id
+			FROM cards c
+			LEFT JOIN users u1 ON c.author_id = u1.id
+			LEFT JOIN users u2 ON c.designee_id = u2.id
+			WHERE c.id = ?
+		`;
+
+		const cardValues = [
 			cardData.title,
 			cardData.description,
 			cardData.priority,
 			cardData.status,
 			cardData.author_id,
 			cardData.designee_id
-		]
+		];
 
 		try {
-			const results = await db.query(sql, values)
-
-			// TODO: Add function that inserts the card into the cards table.
+			const newCard = await db.query(sqlAdd, cardValues);
+			const results = await db.query(sqlInsert, [newCard.insertId]);
 
 			console.log('Insert result:', results);
 			return results;
