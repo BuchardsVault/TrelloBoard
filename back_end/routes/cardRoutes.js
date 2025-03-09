@@ -8,9 +8,6 @@ router.route('/')
 //.put()
 //.delete();
 
-router.route('/database')
-	.get(cardController.getDatabase);
-
 module.exports = router;
 
 console.log(cardController);

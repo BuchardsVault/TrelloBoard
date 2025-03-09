@@ -26,15 +26,6 @@ addCard = async (req, res) => {
 	}
 };
 
-getDatabase = async (req, res) => {
-	try {
-		const result = await db.query('SELECT DATABASE();');
-		res.json({ database: result[0]['DATABASE()'] });
-	} catch (err) {
-		res.status(500).json({ error: 'Failed to fetch database' });
-	}
-};
-
 module.exports = {
 	getCards,
 	addCard,
