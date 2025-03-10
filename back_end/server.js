@@ -1,12 +1,14 @@
 const express = require('express');
 const app = express();
+const cardRoutes = require('./routes/cardRoutes');
+const userRoutes = require('./routes/userRoutes');
 
-const PORT = 3000; // Or your chosen port
-const HOST = '0.0.0.0'; // Accepts external connections
+const PORT = 3000;
+const HOST = '0.0.0.0';
 
-app.get('/', (req, res) => {
-	res.send('This is the `cards` API');
-});
+app.use(express.json());
+app.use('/api/cards', cardRoutes);
+app.use('/api/users', userRoutes)
 
 app.listen(PORT, HOST, () => {
 	console.log(`Server running on http://${HOST}:${PORT}`);
