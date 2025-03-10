@@ -7,7 +7,7 @@ router.route('/')
 	.post(cardController.addCard);
 
 router.route('/:id')
-	.put(cardController.updateCard);
-//.delete();
+	.put(cardController.updateCard)
+	.delete(cardController.deleteCard);
 
 module.exports = router;

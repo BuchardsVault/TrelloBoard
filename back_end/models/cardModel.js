@@ -82,6 +82,8 @@ const Card = {
 			throw err;
 		}
 	},
+
+	deleteCard: async (cardData) => { },
 };
 
 module.exports = Card;

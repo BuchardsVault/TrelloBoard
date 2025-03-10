@@ -42,8 +42,11 @@ updateCard = async (req, res) => {
 	}
 };
 
+deleteCard = async (req, res) => { };
+
 module.exports = {
 	getCards,
 	addCard,
-	updateCard
+	updateCard,
+	deleteCard
 };
