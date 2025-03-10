@@ -61,7 +61,7 @@ app.post('/api/cards', async (req, res) => {
       'INSERT INTO cards (title, description, priority, status, author_id, designee_id) VALUES (?, ?, ?, ?, ?, ?)',
       [title, description, priority, status, author_id, designee_id]
     );
-    
+
     const [newTicket] = await pool.query(`
       SELECT 
         c.id,
@@ -78,7 +78,7 @@ app.post('/api/cards', async (req, res) => {
       LEFT JOIN users u2 ON c.designee_id = u2.id
       WHERE c.id = ?
     `, [result.insertId]);
-    
+
     res.status(201).json(newTicket[0]);
   } catch (error) {
     console.error(error);
