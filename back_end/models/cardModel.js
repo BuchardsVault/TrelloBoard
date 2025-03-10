@@ -83,7 +83,17 @@ const Card = {
 		}
 	},
 
-	deleteCard: async (cardData) => { },
+	deleteCard: async (cardData) => {
+		const sqlDelete = `DELETE FROM cards c WHERE c.id = ?`;
+
+		try {
+			const results = await db.query(sqlDelete, [cardData.id]);
+			return results;
+		} catch (err) {
+			console.error('Error in deleteCard:', err);
+			throw err;
+		}
+	},
 };
 
 module.exports = Card;

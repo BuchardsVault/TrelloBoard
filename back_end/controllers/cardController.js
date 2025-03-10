@@ -42,7 +42,16 @@ updateCard = async (req, res) => {
 	}
 };
 
-deleteCard = async (req, res) => { };
+deleteCard = async (req, res) => {
+	try {
+		const cardData = { id: req.params.id };
+		await Card.deleteCard(cardData);
+		res.json({ message: 'Card deleted successfully' });
+	} catch (err) {
+		console.error('Delete Error:', err);
+		res.status(500).json({ error: 'Failed to delete card' });
+	}
+};
 
 module.exports = {
 	getCards,
