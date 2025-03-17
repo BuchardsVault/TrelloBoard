@@ -1,20 +1,28 @@
 const express = require('express');
 const mysql = require('mysql2/promise');
 const cors = require('cors');
+const fs = require('fs'); 
 
 const app = express();
 app.use(cors()); // Allows requests from your frontend
 app.use(express.json());
 
+const serverCA = [fs.readFileSync('./DigiCertGlobalRootCA.crt.pem', 'utf8')]; 
+
 const dbConfig = {
-  host: 'localhost',
-  user: 'root', // Replace with your MySQL username, just using root here since it has most privilages 
-  password: '@SDSU12345678', // Replace with your MySQL password, I had to alter mine and just used this 
-  database: 'ticket_management',
-  port: 3306
+  host: "trellodb.mysql.database.azure.com",
+  user: "myadmin", // Replace with your MySQL username, just using root here since it has most privilages 
+  password: "SDSU@2025", // Replace with your MySQL password, I had to alter mine and just used this 
+  database: "trello_db",
+  port: 3306,
+  ssl: {
+    rejectUnauthorized: true,
+    ca: serverCA
+  }
 };
 
-// Create DB connection pool
+
+// Create DB connection poolt
 const pool = mysql.createPool(dbConfig);
 
 // Get all tickets
@@ -98,7 +106,8 @@ app.put('/api/cards/:id', async (req, res) => {
   }
 });
 
-const PORT = 3001; // Local port to run on 
+// Start the server
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
