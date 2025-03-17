@@ -20,8 +20,9 @@ function Overview() {
   });
   const [teamMembers, setTeamMembers] = useState([]); // Will store {id, name} objects
 
-  // Update API URL to use backend 3001 
+  // Update API URL to use backend
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
+  const currentUser = JSON.parse(localStorage.getItem('user')) || {};
 
   useEffect(() => {
     fetchTickets();
@@ -30,13 +31,15 @@ function Overview() {
 
   const fetchTickets = async () => {
     try {
-      const response = await axios.get(`${API_URL}/cards`);
+      const response = await axios.get(`${API_URL}/cards`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
       const mappedTickets = response.data.map(ticket => ({
         id: ticket.id.toString(),
         title: ticket.title,
         description: ticket.description,
-        assignee: ticket.designee, // This will be the name from the joined query
-        assigneeId: ticket.designee_id, // Store ID for updates
+        assignee: ticket.designee, // Name from the joined query
+        assigneeId: ticket.designee_id,
         parent: ticket.status,
         priority: ticket.priority
       }));
@@ -48,8 +51,9 @@ function Overview() {
 
   const fetchTeamMembers = async () => {
     try {
-      const response = await axios.get(`${API_URL}/users`);
-      // Expecting array of {id, name} objects
+      const response = await axios.get(`${API_URL}/users`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
       setTeamMembers(response.data);
     } catch (error) {
       console.error('Error fetching team members:', error);
@@ -57,7 +61,7 @@ function Overview() {
         { id: 1, name: 'Donald Trump' },
         { id: 2, name: 'Kamala Harris' },
         { id: 3, name: 'Unassigned' }
-      ]);
+      ]); // Fallback
     }
   };
 
@@ -93,12 +97,16 @@ function Overview() {
       description: newTicket.description || null,
       priority: parseInt(newTicket.priority),
       status: 'todo',
-      author_id: 1, // You'll need to get this from auth context
+      author_id: currentUser.id, // Dynamically set from authenticated user
       designee_id: newTicket.designee_id
     };
 
     try {
-      const response = await axios.post(`${API_URL}/cards`, ticketData);
+      const response = await axios.post(
+        `${API_URL}/cards`,
+        ticketData,
+        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+      );
       const createdTicket = {
         id: response.data.id.toString(),
         title: response.data.title,
@@ -123,9 +131,11 @@ function Overview() {
       const ticketToUpdate = tickets.find(t => t.id === active.id);
       if (ticketToUpdate) {
         const updatedTicket = { ...ticketToUpdate, parent: over.id };
-        await axios.put(`${API_URL}/cards/${active.id}`, {
-          status: over.id
-        });
+        await axios.put(
+          `${API_URL}/cards/${active.id}`,
+          { status: over.id },
+          { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+        );
         setTickets(prevTickets =>
           prevTickets.map(ticket =>
             ticket.id === active.id ? updatedTicket : ticket
@@ -147,9 +157,8 @@ function Overview() {
           <Link to="/dashboard" className="linked-sidebar-button">Dashboard</Link>
           <button className="sidebar-button">All Tickets</button>
           <Link to="/settings" className="linked-sidebar-button">Settings</Link>
-        </div >
-      )
-      }
+        </div>
+      )}
 
       <div className="main-content">
         <button
@@ -187,68 +196,66 @@ function Overview() {
         </div>
       </div>
 
-      {
-        isModalOpen && (
-          <div className="modal-overlay">
-            <div className="modal">
-              <h2>Create New Ticket</h2>
-              <form onSubmit={handleCreateTicket}>
-                <div className="form-group">
-                  <label htmlFor="title">Title:</label>
-                  <input
-                    id="title"
-                    type="text"
-                    name="title"
-                    value={newTicket.title}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="designee_id">Assignee:</label>
-                  <select
-                    id="designee_id"
-                    name="designee_id"
-                    value={newTicket.designee_id || ''}
-                    onChange={handleInputChange}
-                  >
-                    <option value="">Unassigned</option>
-                    {teamMembers.map(member => (
-                      <option key={member.id} value={member.id}>{member.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label htmlFor="priority">Priority:</label>
-                  <input
-                    id="priority"
-                    type="number"
-                    name="priority"
-                    value={newTicket.priority}
-                    onChange={handleInputChange}
-                    min="1"
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="description">Description:</label>
-                  <textarea
-                    id="description"
-                    name="description"
-                    value={newTicket.description}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div className="modal-buttons">
-                  <button type="submit" className="submit-button">Create</button>
-                  <button type="button" onClick={closeModal} className="cancel-button">Cancel</button>
-                </div>
-              </form>
-            </div>
+      {isModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <h2>Create New Ticket</h2>
+            <form onSubmit={handleCreateTicket}>
+              <div className="form-group">
+                <label htmlFor="title">Title:</label>
+                <input
+                  id="title"
+                  type="text"
+                  name="title"
+                  value={newTicket.title}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="designee_id">Assignee:</label>
+                <select
+                  id="designee_id"
+                  name="designee_id"
+                  value={newTicket.designee_id || ''}
+                  onChange={handleInputChange}
+                >
+                  <option value="">Unassigned</option>
+                  {teamMembers.map(member => (
+                    <option key={member.id} value={member.id}>{member.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label htmlFor="priority">Priority:</label>
+                <input
+                  id="priority"
+                  type="number"
+                  name="priority"
+                  value={newTicket.priority}
+                  onChange={handleInputChange}
+                  min="1"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="description">Description:</label>
+                <textarea
+                  id="description"
+                  name="description"
+                  value={newTicket.description}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div className="modal-buttons">
+                <button type="submit" className="submit-button">Create</button>
+                <button type="button" onClick={closeModal} className="cancel-button">Cancel</button>
+              </div>
+            </form>
           </div>
-        )
-      }
-    </div >
+        </div>
+      )}
+    </div>
   );
 }
 

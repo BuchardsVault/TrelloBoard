@@ -2,6 +2,8 @@ const express = require('express');
 const mysql = require('mysql2/promise');
 const cors = require('cors');
 const fs = require('fs'); 
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 
 const app = express();
 app.use(cors()); // Allows requests from your frontend
@@ -24,9 +26,50 @@ const dbConfig = {
 
 // Create DB connection poolt
 const pool = mysql.createPool(dbConfig);
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'; // Use env var in production
 
-// Get all tickets
-app.get('/api/cards', async (req, res) => {
+// Login endpoint
+app.post('/api/login', async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const [users] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
+    if (users.length === 0) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+
+    const user = users[0];
+    // If passwords are plain text (not recommended):
+    if (user.password !== password) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+    // If passwords are hashed with bcrypt (recommended):
+    // const match = await bcrypt.compare(password, user.password);
+    // if (!match) {
+    //   return res.status(401).json({ error: 'Invalid email or password' });
+    // }
+
+    const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '1h' });
+    res.json({ token, user: { id: user.id, name: user.name, email: user.email } });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Middleware to verify JWT
+const authenticateToken = (req, res, next) => {
+  const token = req.headers['authorization']?.split(' ')[1]; // Expecting "Bearer <token>"
+  if (!token) return res.status(401).json({ error: 'No token provided' });
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) return res.status(403).json({ error: 'Invalid token' });
+    req.user = user; // Attach user info to request
+    next();
+  });
+};
+
+// Protect your existing endpoints (e.g., /api/cards)
+app.get('/api/cards', authenticateToken, async (req, res) => {
   try {
     const [rows] = await pool.query(`
       SELECT 
@@ -50,21 +93,10 @@ app.get('/api/cards', async (req, res) => {
   }
 });
 
-// Get all users
-app.get('/api/users', async (req, res) => {
+app.post('/api/cards', authenticateToken, async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT id, name FROM users');
-    res.json(rows);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Failed to fetch users' });
-  }
-});
-
-// Create a ticket
-app.post('/api/cards', async (req, res) => {
-  try {
-    const { title, description, priority, status, author_id, designee_id } = req.body;
+    const { title, description, priority, status, designee_id } = req.body;
+    const author_id = req.user.id; // Get author_id from authenticated user
     const [result] = await pool.query(
       'INSERT INTO cards (title, description, priority, status, author_id, designee_id) VALUES (?, ?, ?, ?, ?, ?)',
       [title, description, priority, status, author_id, designee_id]
@@ -94,8 +126,18 @@ app.post('/api/cards', async (req, res) => {
   }
 });
 
-// Update ticket status
-app.put('/api/cards/:id', async (req, res) => {
+// Existing endpoints (update others similarly with authenticateToken)
+app.get('/api/users', authenticateToken, async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT id, name FROM users');
+    res.json(rows);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
+app.put('/api/cards/:id', authenticateToken, async (req, res) => {
   try {
     const { status } = req.body;
     await pool.query('UPDATE cards SET status = ? WHERE id = ?', [status, req.params.id]);
@@ -106,7 +148,6 @@ app.put('/api/cards/:id', async (req, res) => {
   }
 });
 
-// Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
