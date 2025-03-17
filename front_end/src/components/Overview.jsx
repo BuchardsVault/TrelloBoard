@@ -12,15 +12,16 @@ function Overview() {
   const [tickets, setTickets] = useState([]);
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false); // New state for edit modal
   const [newTicket, setNewTicket] = useState({
     title: '',
-    designee_id: null, // Changed to ID, null for unassigned
+    designee_id: null,
     description: '',
     priority: 1
   });
-  const [teamMembers, setTeamMembers] = useState([]); // Will store {id, name} objects
+  const [editTicket, setEditTicket] = useState(null); // Store ticket being edited
+  const [teamMembers, setTeamMembers] = useState([]);
 
-  // Update API URL to use backend
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
   const currentUser = JSON.parse(localStorage.getItem('user')) || {};
 
@@ -38,7 +39,7 @@ function Overview() {
         id: ticket.id.toString(),
         title: ticket.title,
         description: ticket.description,
-        assignee: ticket.designee, // Name from the joined query
+        assignee: ticket.designee,
         assigneeId: ticket.designee_id,
         parent: ticket.status,
         priority: ticket.priority
@@ -57,11 +58,6 @@ function Overview() {
       setTeamMembers(response.data);
     } catch (error) {
       console.error('Error fetching team members:', error);
-      setTeamMembers([
-        { id: 1, name: 'Donald Trump' },
-        { id: 2, name: 'Kamala Harris' },
-        { id: 3, name: 'Unassigned' }
-      ]); // Fallback
     }
   };
 
@@ -80,9 +76,33 @@ function Overview() {
     });
   };
 
+  const openEditModal = (ticket) => {
+    setEditTicket({
+      id: ticket.id,
+      title: ticket.title,
+      description: ticket.description || '',
+      priority: ticket.priority,
+      designee_id: ticket.assigneeId
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const closeEditModal = () => {
+    setIsEditModalOpen(false);
+    setEditTicket(null);
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setNewTicket(prev => ({
+      ...prev,
+      [name]: name === 'designee_id' ? (value === '' ? null : parseInt(value)) : value
+    }));
+  };
+
+  const handleEditInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditTicket(prev => ({
       ...prev,
       [name]: name === 'designee_id' ? (value === '' ? null : parseInt(value)) : value
     }));
@@ -97,7 +117,7 @@ function Overview() {
       description: newTicket.description || null,
       priority: parseInt(newTicket.priority),
       status: 'todo',
-      author_id: currentUser.id, // Dynamically set from authenticated user
+      author_id: currentUser.id,
       designee_id: newTicket.designee_id
     };
 
@@ -120,6 +140,58 @@ function Overview() {
       closeModal();
     } catch (error) {
       console.error('Error creating ticket:', error);
+    }
+  };
+
+  const handleUpdateTicket = async (e) => {
+    e.preventDefault();
+    if (!editTicket.title) return;
+
+    const ticketData = {
+      title: editTicket.title,
+      description: editTicket.description || null,
+      priority: parseInt(editTicket.priority),
+      designee_id: editTicket.designee_id
+    };
+
+    try {
+      await axios.put(
+        `${API_URL}/cards/${editTicket.id}`,
+        ticketData,
+        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+      );
+      setTickets(prevTickets =>
+        prevTickets.map(ticket =>
+          ticket.id === editTicket.id
+            ? {
+                ...ticket,
+                title: editTicket.title,
+                description: editTicket.description,
+                priority: editTicket.priority,
+                assignee: teamMembers.find(m => m.id === editTicket.designee_id)?.name || 'Unassigned',
+                assigneeId: editTicket.designee_id
+              }
+            : ticket
+        )
+      );
+      closeEditModal();
+    } catch (error) {
+      console.error('Error updating ticket:', error);
+    }
+  };
+
+  const handleDeleteTicket = async () => {
+    if (!window.confirm('Are you sure you want to delete this ticket?')) return;
+
+    try {
+      await axios.delete(
+        `${API_URL}/cards/${editTicket.id}`,
+        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+      );
+      setTickets(prevTickets => prevTickets.filter(ticket => ticket.id !== editTicket.id));
+      closeEditModal();
+    } catch (error) {
+      console.error('Error deleting ticket:', error);
     }
   };
 
@@ -178,7 +250,12 @@ function Overview() {
                     .filter(ticket => ticket.parent === id)
                     .map(ticket => (
                       <Draggable key={ticket.id} id={ticket.id}>
-                        <div className="ticket-card" data-parent={ticket.parent}>
+                        <div
+                          className="ticket-card"
+                          data-parent={ticket.parent}
+                          onClick={() => openEditModal(ticket)} // Click to edit
+                          style={{ cursor: 'pointer' }}
+                        >
                           <h4>{ticket.title}</h4>
                           <p>Assigned to: {ticket.assignee || 'Unassigned'}</p>
                           <p>{ticket.description || 'No description'}</p>
@@ -250,6 +327,67 @@ function Overview() {
               <div className="modal-buttons">
                 <button type="submit" className="submit-button">Create</button>
                 <button type="button" onClick={closeModal} className="cancel-button">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {isEditModalOpen && editTicket && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <h2>Edit Ticket</h2>
+            <form onSubmit={handleUpdateTicket}>
+              <div className="form-group">
+                <label htmlFor="edit-title">Title:</label>
+                <input
+                  id="edit-title"
+                  type="text"
+                  name="title"
+                  value={editTicket.title}
+                  onChange={handleEditInputChange}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="edit-designee_id">Assignee:</label>
+                <select
+                  id="edit-designee_id"
+                  name="designee_id"
+                  value={editTicket.designee_id || ''}
+                  onChange={handleEditInputChange}
+                >
+                  <option value="">Unassigned</option>
+                  {teamMembers.map(member => (
+                    <option key={member.id} value={member.id}>{member.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label htmlFor="edit-priority">Priority:</label>
+                <input
+                  id="edit-priority"
+                  type="number"
+                  name="priority"
+                  value={editTicket.priority}
+                  onChange={handleEditInputChange}
+                  min="1"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="edit-description">Description:</label>
+                <textarea
+                  id="edit-description"
+                  name="description"
+                  value={editTicket.description}
+                  onChange={handleEditInputChange}
+                />
+              </div>
+              <div className="modal-buttons">
+                <button type="submit" className="submit-button">Update</button>
+                <button type="button" onClick={handleDeleteTicket} className="delete-button">Delete</button>
+                <button type="button" onClick={closeEditModal} className="cancel-button">Cancel</button>
               </div>
             </form>
           </div>
