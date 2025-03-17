@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom'; // Added for Create Account link
+import { Link, useNavigate } from 'react-router-dom'; // Added for Create Account link
 import axios from 'axios';
 
 function Login({ setIsAuthenticated }) {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [typedText, setTypedText] = useState('');
+  const [error, setError] = useState(''); // Added for error handling
   const fullText = 'Trello, managing tasks made simple.';
+  const navigate = useNavigate(); // For redirecting after login
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
 
   useEffect(() => {
     let index = 0;
@@ -24,12 +27,17 @@ function Login({ setIsAuthenticated }) {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('YOUR_BACKEND_API/login', { username, password });
-      if (response.data.success) {
+      const response = await axios.post(`${API_URL}/login`, { email, password });
+      if (response.data.token) {
+        // Store token and user info in localStorage
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
         setIsAuthenticated(true);
+        navigate('/dashboard'); // Redirect to Overview page after login
       }
     } catch (error) {
       console.error('Login failed:', error);
+      setError('Invalid email or password');
     }
   };
 
@@ -60,6 +68,7 @@ function Login({ setIsAuthenticated }) {
           letterSpacing: '1px',
           textTransform: 'uppercase',
         }}>{typedText}</h1>
+        {error && <p style={{ color: 'red' }}>{error}</p>}
         <form onSubmit={handleLogin} style={{
           display: 'flex',
           flexDirection: 'column',
@@ -67,10 +76,10 @@ function Login({ setIsAuthenticated }) {
           width: '100%',
         }}>
           <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="Username"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Email"
             style={{
               padding: '12px 16px',
               fontSize: '16px',
@@ -131,7 +140,6 @@ function Login({ setIsAuthenticated }) {
             Login
           </button>
         </form>
-        {/* Create Account Button */}
         <Link to="/create-account" style={{ textDecoration: 'none' }}>
           <button style={{
             padding: '12px 24px',
