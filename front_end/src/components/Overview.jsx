@@ -21,7 +21,7 @@ function Overview() {
   const [teamMembers, setTeamMembers] = useState([]); // Will store {id, name} objects
 
   // Update API URL to use backend 3001 
-  const API_URL = 'http://localhost:3001/api';
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
 
   useEffect(() => {
     fetchTickets();
