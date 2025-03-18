@@ -12,54 +12,54 @@ function Overview() {
   const [tickets, setTickets] = useState([]);
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false); // New state for edit modal
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [newTicket, setNewTicket] = useState({
     title: '',
     designee_id: null,
     description: '',
     priority: 1
   });
-  const [editTicket, setEditTicket] = useState(null); // Store ticket being edited
+  const [editTicket, setEditTicket] = useState(null);
   const [teamMembers, setTeamMembers] = useState([]);
 
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
   const currentUser = JSON.parse(localStorage.getItem('user')) || {};
 
   useEffect(() => {
+    const fetchTickets = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/cards`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        });
+        const mappedTickets = response.data.map(ticket => ({
+          id: ticket.id.toString(),
+          title: ticket.title,
+          description: ticket.description,
+          assignee: ticket.designee,
+          assigneeId: ticket.designee_id,
+          parent: ticket.status,
+          priority: ticket.priority
+        }));
+        setTickets(mappedTickets);
+      } catch (error) {
+        console.error('Error fetching tickets:', error);
+      }
+    };
+
+    const fetchTeamMembers = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/users`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        });
+        setTeamMembers(response.data);
+      } catch (error) {
+        console.error('Error fetching team members:', error);
+      }
+    };
+
     fetchTickets();
     fetchTeamMembers();
-  }, [fetchTickets, fetchTeamMembers]);
-
-  const fetchTickets = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/cards`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
-      const mappedTickets = response.data.map(ticket => ({
-        id: ticket.id.toString(),
-        title: ticket.title,
-        description: ticket.description,
-        assignee: ticket.designee,
-        assigneeId: ticket.designee_id,
-        parent: ticket.status,
-        priority: ticket.priority
-      }));
-      setTickets(mappedTickets);
-    } catch (error) {
-      console.error('Error fetching tickets:', error);
-    }
-  };
-
-  const fetchTeamMembers = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/users`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
-      setTeamMembers(response.data);
-    } catch (error) {
-      console.error('Error fetching team members:', error);
-    }
-  };
+  }, []); // Empty dependency array for one-time fetch on mount
 
   const toggleSidebar = () => {
     setIsSidebarVisible(!isSidebarVisible);
@@ -253,7 +253,7 @@ function Overview() {
                         <div
                           className="ticket-card"
                           data-parent={ticket.parent}
-                          onClick={() => openEditModal(ticket)} // Click to edit
+                          onClick={() => openEditModal(ticket)}
                           style={{ cursor: 'pointer' }}
                         >
                           <h4>{ticket.title}</h4>
