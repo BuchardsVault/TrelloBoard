@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom'; // Added for Create Account link
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 function Login({ setIsAuthenticated }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [typedText, setTypedText] = useState('');
-  const [error, setError] = useState(''); // Added for error handling
+  const [error, setError] = useState('');
   const fullText = 'Trello, managing tasks made simple.';
-  const navigate = useNavigate(); // For redirecting after login
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
+  const navigate = useNavigate();
+  
+  // Use relative URL for production, fallback to localhost for local dev
+  const API_URL = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:3000/api');
 
   useEffect(() => {
     let index = 0;
@@ -29,15 +31,14 @@ function Login({ setIsAuthenticated }) {
     try {
       const response = await axios.post(`${API_URL}/login`, { email, password });
       if (response.data.token) {
-        // Store token and user info in localStorage
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
         setIsAuthenticated(true);
-        navigate('/dashboard'); // Redirect to Overview page after login
+        navigate('/dashboard');
       }
     } catch (error) {
-      console.error('Login failed:', error);
-      setError('Invalid email or password');
+      console.error('Login failed:', error.response ? error.response.data : error.message);
+      setError(error.response?.data?.error || 'Login failed. Please check your connection or credentials.');
     }
   };
 

@@ -22,7 +22,8 @@ function Overview() {
   const [editTicket, setEditTicket] = useState(null);
   const [teamMembers, setTeamMembers] = useState([]);
 
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
+  // Use relative URL in production, localhost in development
+  const API_URL = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:3000/api');
   const currentUser = JSON.parse(localStorage.getItem('user')) || {};
 
   useEffect(() => {
@@ -42,7 +43,7 @@ function Overview() {
         }));
         setTickets(mappedTickets);
       } catch (error) {
-        console.error('Error fetching tickets:', error);
+        console.error('Error fetching tickets:', error.response ? error.response.data : error.message);
       }
     };
 
@@ -53,13 +54,13 @@ function Overview() {
         });
         setTeamMembers(response.data);
       } catch (error) {
-        console.error('Error fetching team members:', error);
+        console.error('Error fetching team members:', error.response ? error.response.data : error.message);
       }
     };
 
     fetchTickets();
     fetchTeamMembers();
-  }, [API_URL]); // Added API_URL to the dependency array
+  }, [API_URL]);
 
   const toggleSidebar = () => {
     setIsSidebarVisible(!isSidebarVisible);
@@ -139,7 +140,7 @@ function Overview() {
       setTickets(prevTickets => [...prevTickets, createdTicket]);
       closeModal();
     } catch (error) {
-      console.error('Error creating ticket:', error);
+      console.error('Error creating ticket:', error.response ? error.response.data : error.message);
     }
   };
 
@@ -176,7 +177,7 @@ function Overview() {
       );
       closeEditModal();
     } catch (error) {
-      console.error('Error updating ticket:', error);
+      console.error('Error updating ticket:', error.response ? error.response.data : error.message);
     }
   };
 
@@ -191,7 +192,7 @@ function Overview() {
       setTickets(prevTickets => prevTickets.filter(ticket => ticket.id !== editTicket.id));
       closeEditModal();
     } catch (error) {
-      console.error('Error deleting ticket:', error);
+      console.error('Error deleting ticket:', error.response ? error.response.data : error.message);
     }
   };
 
@@ -215,7 +216,7 @@ function Overview() {
         );
       }
     } catch (error) {
-      console.error('Error updating ticket status:', error);
+      console.error('Error updating ticket status:', error.response ? error.response.data : error.message);
     }
   };
 
