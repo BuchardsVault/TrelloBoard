@@ -8,6 +8,7 @@ const bcrypt = require('bcrypt');
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(express.static('public'));
 
 const serverCA = [fs.readFileSync('./DigiCertGlobalRootCA.crt.pem', 'utf8')];
 
@@ -171,4 +172,8 @@ app.delete('/api/cards/:id', authenticateToken, async (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+});
+
+app.get('*', (req, res) => {
+  res.sendFile('index.html', { root: 'public' });
 });
