@@ -37,6 +37,7 @@ jobs:
           cp back_end/server.js dist/
           cp back_end/package.json dist/
           cp back_end/package-lock.json dist/
+          cp back_end/DigiCertGlobalRootCA.crt.pem dist/  # Add SSL cert
           if [ -d "front_end/build" ]; then
             cp -r front_end/build/* dist/public/
           else
