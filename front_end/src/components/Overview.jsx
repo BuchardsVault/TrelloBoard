@@ -28,7 +28,7 @@ function Overview() {
   useEffect(() => {
     fetchTickets();
     fetchTeamMembers();
-  }, []);
+  }, [fetchTickets, fetchTeamMembers]);
 
   const fetchTickets = async () => {
     try {
