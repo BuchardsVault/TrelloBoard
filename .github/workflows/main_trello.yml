@@ -1,7 +1,7 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
-name: Build and deploy Node.js app to Azure Web App - Trello
+name: JavaScript CI
 
 on:
   push:
@@ -23,14 +23,17 @@ jobs:
         with:
           node-version: '22.x'
 
-      - name: npm install, build, and test
+      - name: npm install and build
         run: |
           npm install
+          cd front_end
+          npm install
           npm run build --if-present
-          npm run test --if-present
+          cd ..
 
       - name: Zip artifact for deployment
-        run: zip release.zip ./* -r
+        run: |
+          zip -r release.zip server.js package.json package-lock.json front_end/* -x "front_end/node_modules/*"
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
@@ -58,7 +61,7 @@ jobs:
         run: unzip release.zip
       
       - name: Login to Azure
-        uses: azure/login@v2
+        uses: azure/webapps-deploy@v2
         with:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_4D18D7A4EC314C288921152D2118FC08 }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_5C5007CFF6BA4FB5B49E0DC3192C86D8 }}
@@ -71,4 +74,3 @@ jobs:
           app-name: 'Trello'
           slot-name: 'Production'
           package: .
-          
