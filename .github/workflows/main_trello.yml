@@ -28,14 +28,21 @@ jobs:
         run: |
           npm install
           npm run build
+          ls -la  # Debug: Show all files in front_end/
+          ls -la build/ || echo "Build directory not found"  # Debug: Confirm build/ exists
 
       - name: Prepare deployment package
         run: |
-          mkdir -p dist
+          mkdir -p dist/public
           cp server.js dist/
           cp package.json dist/
           cp package-lock.json dist/
-          cp -r front_end/build dist/public
+          if [ -d "front_end/build" ]; then
+            cp -r front_end/build/* dist/public/
+          else
+            echo "Error: front_end/build directory not found"
+            exit 1
+          fi
           cd dist
           zip -r ../release.zip .
 
