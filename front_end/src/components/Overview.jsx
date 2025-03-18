@@ -59,7 +59,7 @@ function Overview() {
 
     fetchTickets();
     fetchTeamMembers();
-  }, []); // Empty dependency array for one-time fetch on mount
+  }, [API_URL]); // Added API_URL to the dependency array
 
   const toggleSidebar = () => {
     setIsSidebarVisible(!isSidebarVisible);
