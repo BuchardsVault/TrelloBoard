@@ -20,7 +20,8 @@ jobs:
         with:
           node-version: '22.x'
 
-      - name: Install backend dependencies
+      - name: Install backend dependencies locally
+        working-directory: ./back_end
         run: npm install
 
       - name: Install frontend dependencies and build
@@ -28,8 +29,8 @@ jobs:
         run: |
           npm install
           npm run build
-          ls -la  # Debug: Show all files in front_end/
-          ls -la build/ || echo "Build directory not found"  # Debug: Confirm build/ exists
+          ls -la
+          ls -la build/ || echo "Build directory not found"
 
       - name: Prepare deployment package
         run: |
@@ -37,7 +38,7 @@ jobs:
           cp back_end/server.js dist/
           cp back_end/package.json dist/
           cp back_end/package-lock.json dist/
-          cp back_end/DigiCertGlobalRootCA.crt.pem dist/  # Add SSL cert
+          cp back_end/DigiCertGlobalRootCA.crt.pem dist/  # Ensure SSL cert is included
           if [ -d "front_end/build" ]; then
             cp -r front_end/build/* dist/public/
           else
@@ -45,6 +46,7 @@ jobs:
             exit 1
           fi
           cd dist
+          npm install --production  # Install dependencies in the deployment package
           zip -r ../release.zip .
 
       - name: Upload artifact
