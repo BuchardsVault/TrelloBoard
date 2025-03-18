@@ -7,7 +7,7 @@ function Login({ setIsAuthenticated }) {
   const [password, setPassword] = useState('');
   const [typedText, setTypedText] = useState('');
   const [error, setError] = useState('');
-  const fullText = 'Testing Push';
+  const fullText = 'Trello, task management made simple.';
   const navigate = useNavigate();
   
   // Use relative URL for production, fallback to localhost for local dev
