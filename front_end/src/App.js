@@ -4,7 +4,7 @@ import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import Settings from './components/Settings';
 import Overview from './components/Overview';
-import Teams from './components/Teams';
+
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = React.useState(true); // Set to true to bypass login
@@ -42,14 +42,6 @@ function App() {
           element={
             <ProtectedRoute>
               <Overview />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/teams" 
-          element={
-            <ProtectedRoute>
-              <Teams />
             </ProtectedRoute>
           } 
         />

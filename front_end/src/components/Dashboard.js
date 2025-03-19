@@ -87,32 +87,6 @@ function Dashboard() {
               Overview
             </button>
           </Link>
-
-          <Link to="/teams" style={{ textDecoration: 'none' }}>
-            <button style={{
-              padding: '12px 24px',
-              fontSize: '16px',
-              fontWeight: '500',
-              color: '#fff',
-              background: 'linear-gradient(135deg, #5a67d8, #434190)',
-              border: 'none',
-              borderRadius: '50px',
-              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
-              cursor: 'pointer',
-              transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-              outline: 'none',
-            }}
-            onMouseOver={(e) => {
-              e.target.style.transform = 'scale(1.05)';
-              e.target.style.boxShadow = '0 6px 12px rgba(0, 0, 0, 0.25)';
-            }}
-            onMouseOut={(e) => {
-              e.target.style.transform = 'scale(1)';
-              e.target.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
-            }}>
-              Teams
-            </button>
-          </Link>
         </div>
       </div>
     </div>
