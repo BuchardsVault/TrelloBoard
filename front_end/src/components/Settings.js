@@ -7,8 +7,8 @@ function Settings() {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [darkMode, setDarkMode] = useState(false); // Client-side only
-  const [notifications, setNotifications] = useState(true); // Client-side only
+  const [darkMode, setDarkMode] = useState(false);
+  const [notifications, setNotifications] = useState(true);
   const [message, setMessage] = useState('');
 
   const API_URL = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:3000/api');
@@ -29,7 +29,7 @@ function Settings() {
 
     setUser({ name: currentUser.name || '', email: currentUser.email || '' });
     fetchUserData();
-  }, [API_URL, currentUser.id]);
+  }, [API_URL, currentUser.id, currentUser.name, currentUser.email]); // Added missing dependencies
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -59,7 +59,7 @@ function Settings() {
       if (currentPassword) updates.currentPassword = currentPassword;
 
       if (Object.keys(updates).length > 0) {
-        const response = await axios.put(
+        await axios.put(
           `${API_URL}/users/${currentUser.id}`,
           updates,
           { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
