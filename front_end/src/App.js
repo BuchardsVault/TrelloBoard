@@ -1,53 +1,106 @@
-import React from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
+import { jwtDecode }from 'jwt-decode'; // For decoding JWT to check expiration
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import Settings from './components/Settings';
 import Overview from './components/Overview';
 
+// Protected Route Component
+function PrivateRoute({ children }) {
+  const navigate = useNavigate();
+  const token = localStorage.getItem('token');
 
+  useEffect(() => {
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+
+    try {
+      const decoded = jwtDecode(token);
+      const currentTime = Date.now() / 1000; // Convert to seconds
+      if (decoded.exp < currentTime) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        navigate('/login');
+      }
+    } catch (error) {
+      console.error('Invalid token:', error);
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      navigate('/login');
+    }
+  }, [token, navigate]);
+
+  return token ? children : null; // Render children only if token is valid
+}
+
+// Main App Component
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = React.useState(true); // Set to true to bypass login
-
-  // Protected Route component
-  const ProtectedRoute = ({ children }) => {
-    return isAuthenticated ? children : <Navigate to="/" />;
-  };
-
   return (
     <Router>
       <Routes>
-        <Route 
-          path="/" 
-          element={<Login setIsAuthenticated={setIsAuthenticated} />} 
-        />
-        <Route 
-          path="/dashboard" 
+        <Route path="/login" element={<Login />} />
+        <Route
+          path="/dashboard"
           element={
-            <ProtectedRoute>
+            <PrivateRoute>
               <Dashboard />
-            </ProtectedRoute>
-          } 
+            </PrivateRoute>
+          }
         />
-        <Route 
-          path="/settings" 
+        <Route
+          path="/settings"
           element={
-            <ProtectedRoute>
+            <PrivateRoute>
               <Settings />
-            </ProtectedRoute>
-          } 
+            </PrivateRoute>
+          }
         />
-        <Route 
-          path="/overview" 
+        <Route
+          path="/overview"
           element={
-            <ProtectedRoute>
+            <PrivateRoute>
               <Overview />
-            </ProtectedRoute>
-          } 
+            </PrivateRoute>
+          }
         />
+        <Route path="/" element={<RedirectToDashboardOrLogin />} />
       </Routes>
     </Router>
   );
+}
+
+// Redirect Component for Root Path
+function RedirectToDashboardOrLogin() {
+  const navigate = useNavigate();
+  const token = localStorage.getItem('token');
+
+  useEffect(() => {
+    if (token) {
+      try {
+        const decoded = jwtDecode(token);
+        const currentTime = Date.now() / 1000;
+        if (decoded.exp >= currentTime) {
+          navigate('/dashboard');
+        } else {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          navigate('/login');
+        }
+      } catch (error) {
+        console.error('Invalid token:', error);
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        navigate('/login');
+      }
+    } else {
+      navigate('/login');
+    }
+  }, [navigate, token]);
+
+  return null; // This component only handles redirection
 }
 
 export default App;
