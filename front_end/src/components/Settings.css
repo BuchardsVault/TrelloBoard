@@ -1,0 +1,98 @@
+.settings-container {
+    padding: 20px;
+    background-color: #f4f5f7;
+    min-height: 100vh;
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .settings-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 40px;
+    width: 100%;
+    max-width: 500px; /* Wider than Login for more fields */
+  }
+  
+  .settings-title {
+    font-size: 36px;
+    font-weight: 700;
+    color: #172b4d;
+    margin: 0;
+    text-align: center;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  
+  .settings-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+  }
+  
+  .settings-section {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .section-title {
+    font-size: 20px;
+    color: #172b4d;
+    margin: 0;
+  }
+  
+  .settings-input {
+    padding: 12px 16px;
+    font-size: 16px;
+    color: #333;
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    outline: none;
+    transition: border-color 0.2s ease;
+  }
+  
+  .settings-input:focus {
+    border-color: #5a67d8;
+  }
+  
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .checkbox-input {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .checkbox-label span {
+    font-size: 16px;
+    color: #333;
+  }
+  
+  .save-button {
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: 500;
+    color: #fff;
+    background: linear-gradient(135deg, #5a67d8, #434190);
+    border: none;
+    border-radius: 50px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    outline: none;
+  }
+  
+  .save-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+  }
