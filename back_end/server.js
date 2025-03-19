@@ -4,8 +4,18 @@ const cors = require('cors');
 const fs = require('fs');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const http = require('http');
+const { Server } = require('socket.io');
 
 const app = express();
+const server = http.createServer(app); // Create HTTP server for Socket.IO
+const io = new Server(server, {
+  cors: {
+    origin: process.env.NODE_ENV === 'production' ? 'https://trello.azurewebsites.net/' : 'http://localhost:3000',
+    methods: ['GET', 'POST'],
+  },
+});
+
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
@@ -20,8 +30,8 @@ const dbConfig = {
   port: 3306,
   ssl: {
     rejectUnauthorized: true,
-    ca: serverCA
-  }
+    ca: serverCA,
+  },
 };
 
 const pool = mysql.createPool(dbConfig);
@@ -38,7 +48,26 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// Login endpoint (unchanged)
+// Socket.IO Authentication Middleware
+io.use((socket, next) => {
+  const token = socket.handshake.auth.token;
+  if (!token) return next(new Error('Authentication error: No token provided'));
+
+  jwt.verify(token, JWT_SECRET, (err, decoded) => {
+    if (err) return next(new Error('Authentication error: Invalid token'));
+    socket.user = decoded; // Attach user data to socket
+    next();
+  });
+});
+
+io.on('connection', (socket) => {
+  console.log(`User ${socket.user.id} connected`);
+  socket.on('disconnect', () => {
+    console.log(`User ${socket.user.id} disconnected`);
+  });
+});
+
+// Login endpoint
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -123,14 +152,16 @@ app.post('/api/cards', authenticateToken, async (req, res) => {
       WHERE c.id = ?
     `, [result.insertId]);
 
-    res.status(201).json(newTicket[0]);
+    const ticket = newTicket[0];
+    io.emit('ticketCreated', ticket); // Broadcast to all clients
+    res.status(201).json(ticket);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Failed to create ticket' });
   }
 });
 
-// Update ticket (expanded to handle all fields)
+// Update ticket
 app.put('/api/cards/:id', authenticateToken, async (req, res) => {
   try {
     const { title, description, priority, status, designee_id } = req.body;
@@ -148,7 +179,27 @@ app.put('/api/cards/:id', authenticateToken, async (req, res) => {
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: 'Ticket not found' });
     }
-    res.json({ success: true });
+
+    const [updatedTicket] = await pool.query(`
+      SELECT 
+        c.id,
+        c.title,
+        c.description,
+        c.priority,
+        c.status,
+        u1.name AS author,
+        u2.name AS designee,
+        c.author_id,
+        c.designee_id
+      FROM cards c
+      LEFT JOIN users u1 ON c.author_id = u1.id
+      LEFT JOIN users u2 ON c.designee_id = u2.id
+      WHERE c.id = ?
+    `, [req.params.id]);
+
+    const ticket = updatedTicket[0];
+    io.emit('ticketUpdated', ticket); // Broadcast to all clients
+    res.json(ticket);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Failed to update ticket' });
@@ -162,6 +213,8 @@ app.delete('/api/cards/:id', authenticateToken, async (req, res) => {
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: 'Ticket not found' });
     }
+
+    io.emit('ticketDeleted', { id: parseInt(req.params.id) }); // Broadcast to all clients
     res.json({ success: true });
   } catch (error) {
     console.error(error);
@@ -170,7 +223,7 @@ app.delete('/api/cards/:id', authenticateToken, async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+server.listen(PORT, () => { // Use server.listen instead of app.listen
   console.log(`Server running on port ${PORT}`);
 });
 
