@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import './Login.css'; // Import the CSS file
+import './Login.css';
 
 function Login({ setIsAuthenticated }) {
   const [email, setEmail] = useState('');
@@ -10,7 +10,7 @@ function Login({ setIsAuthenticated }) {
   const [error, setError] = useState('');
   const fullText = 'Trello, task management made simple.';
   const navigate = useNavigate();
-  
+
   const API_URL = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:3000/api');
 
   useEffect(() => {
@@ -28,16 +28,25 @@ function Login({ setIsAuthenticated }) {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setError(''); // Clear previous errors
     try {
+      console.log('Attempting login with:', { email, password }); // Debug input
       const response = await axios.post(`${API_URL}/login`, { email, password });
+      console.log('Login response:', response.data); // Debug response
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
-        setIsAuthenticated(true);
+        if (setIsAuthenticated) setIsAuthenticated(true);
         navigate('/dashboard');
+      } else {
+        setError('No token received from server.');
       }
     } catch (error) {
-      console.error('Login failed:', error.response ? error.response.data : error.message);
+      console.error('Login error details:', {
+        message: error.message,
+        response: error.response ? error.response.data : null,
+        status: error.response ? error.response.status : null,
+      });
       setError(error.response?.data?.error || 'Login failed. Please check your connection or credentials.');
     }
   };
