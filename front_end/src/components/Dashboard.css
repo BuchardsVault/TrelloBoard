@@ -1,0 +1,59 @@
+.dashboard-container {
+    padding: 20px;
+    background-color: #f4f5f7;
+    min-height: 100vh;
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative; /* Allows absolute positioning of the logout button */
+  }
+  
+  .dashboard-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 40px;
+  }
+  
+  .dashboard-title {
+    font-size: 48px;
+    font-weight: 700;
+    color: #172b4d;
+    margin: 0;
+    text-align: center;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  
+  .dashboard-buttons {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  .dashboard-button {
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: 500;
+    color: #fff;
+    background: linear-gradient(135deg, #5a67d8, #434190);
+    border: none;
+    border-radius: 50px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    outline: none;
+  }
+  
+  .dashboard-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+  }
+  
+  .logout-button {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+  }
