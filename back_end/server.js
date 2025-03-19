@@ -3,12 +3,11 @@ const mysql = require('mysql2/promise');
 const cors = require('cors');
 const fs = require('fs');
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
 const http = require('http');
 const { Server } = require('socket.io');
 
 const app = express();
-const server = http.createServer(app); // Create HTTP server for Socket.IO
+const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: process.env.NODE_ENV === 'production' ? 'https://trello.azurewebsites.net/' : 'http://localhost:3000',
@@ -55,7 +54,7 @@ io.use((socket, next) => {
 
   jwt.verify(token, JWT_SECRET, (err, decoded) => {
     if (err) return next(new Error('Authentication error: Invalid token'));
-    socket.user = decoded; // Attach user data to socket
+    socket.user = decoded;
     next();
   });
 });
@@ -77,7 +76,7 @@ app.post('/api/login', async (req, res) => {
     }
 
     const user = users[0];
-    if (user.password !== password) { // Replace with bcrypt.compare if hashed
+    if (user.password !== password) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
@@ -125,6 +124,75 @@ app.get('/api/users', authenticateToken, async (req, res) => {
   }
 });
 
+// Get current user data
+app.get('/api/users/:id', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.id !== parseInt(req.params.id)) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+    const [rows] = await pool.query('SELECT id, name, email FROM users WHERE id = ?', [req.params.id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json(rows[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to fetch user data' });
+  }
+});
+
+// Update user data (no hashing)
+app.put('/api/users/:id', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.id !== parseInt(req.params.id)) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    const { name, email, password, currentPassword } = req.body;
+    const updates = {};
+
+    // Fetch current user data for password verification
+    const [users] = await pool.query('SELECT password FROM users WHERE id = ?', [req.params.id]);
+    if (users.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const user = users[0];
+
+    // Verify current password if changing password
+    if (password) {
+      if (!currentPassword) {
+        return res.status(400).json({ error: 'Current password required to change password' });
+      }
+      if (currentPassword !== user.password) {
+        return res.status(401).json({ error: 'Current password is incorrect' });
+      }
+      updates.password = password; // Plain text, no hashing
+    }
+
+    if (name) updates.name = name;
+    if (email) updates.email = email;
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ error: 'No changes provided' });
+    }
+
+    const [result] = await pool.query(
+      'UPDATE users SET ? WHERE id = ?',
+      [updates, req.params.id]
+    );
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const [updatedUser] = await pool.query('SELECT id, name, email FROM users WHERE id = ?', [req.params.id]);
+    res.json(updatedUser[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to update user' });
+  }
+});
+
 // Create a ticket
 app.post('/api/cards', authenticateToken, async (req, res) => {
   try {
@@ -153,7 +221,7 @@ app.post('/api/cards', authenticateToken, async (req, res) => {
     `, [result.insertId]);
 
     const ticket = newTicket[0];
-    io.emit('ticketCreated', ticket); // Broadcast to all clients
+    io.emit('ticketCreated', ticket);
     res.status(201).json(ticket);
   } catch (error) {
     console.error(error);
@@ -198,7 +266,7 @@ app.put('/api/cards/:id', authenticateToken, async (req, res) => {
     `, [req.params.id]);
 
     const ticket = updatedTicket[0];
-    io.emit('ticketUpdated', ticket); // Broadcast to all clients
+    io.emit('ticketUpdated', ticket);
     res.json(ticket);
   } catch (error) {
     console.error(error);
@@ -214,7 +282,7 @@ app.delete('/api/cards/:id', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Ticket not found' });
     }
 
-    io.emit('ticketDeleted', { id: parseInt(req.params.id) }); // Broadcast to all clients
+    io.emit('ticketDeleted', { id: parseInt(req.params.id) });
     res.json({ success: true });
   } catch (error) {
     console.error(error);
@@ -223,7 +291,7 @@ app.delete('/api/cards/:id', authenticateToken, async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => { // Use server.listen instead of app.listen
+server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 

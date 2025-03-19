@@ -14,7 +14,7 @@
     align-items: center;
     gap: 40px;
     width: 100%;
-    max-width: 500px; /* Wider than Login for more fields */
+    max-width: 500px;
   }
   
   .settings-title {
@@ -25,6 +25,12 @@
     text-align: center;
     letter-spacing: 1px;
     text-transform: uppercase;
+  }
+  
+  .settings-message {
+    font-size: 16px;
+    color: #d9534f; /* Red for errors, could change to green for success */
+    text-align: center;
   }
   
   .settings-form {
