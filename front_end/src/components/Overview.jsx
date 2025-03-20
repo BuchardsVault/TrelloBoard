@@ -72,47 +72,47 @@ function Overview() {
     };
   
     fetchTickets();
-    fetchTeamMembers();
-  
-    socket.on('connect_error', (err) => console.error('Socket error:', err.message));
-    socket.on('ticketCreated', (newTicket) => {
-      if (isMounted) {
-        setTickets(prev => [...prev, {
-          id: newTicket.id.toString(),
-          title: newTicket.title,
-          description: newTicket.description,
-          assignee: teamMembers.find(m => m.id === newTicket.designee_id)?.name || 'Unassigned',
-          assigneeId: newTicket.designee_id,
-          parent: newTicket.status,
-          priority: newTicket.priority,
-        }]);
-      }
-    });
-  
-    socket.on('ticketUpdated', (updatedTicket) => {
-      if (isMounted) {
-        setTickets(prev =>
-          prev.map(ticket =>
-            ticket.id === updatedTicket.id.toString()
-              ? { ...ticket, ...updatedTicket, assignee: teamMembers.find(m => m.id === updatedTicket.designee_id)?.name || 'Unassigned' }
-              : ticket
-          )
-        );
-      }
-    });
-  
-    socket.on('ticketDeleted', ({ id }) => {
-      if (isMounted) setTickets(prev => prev.filter(ticket => ticket.id !== id.toString()));
-    });
-  
-    return () => {
-      isMounted = false;
-      socket.off('ticketCreated');
-      socket.off('ticketUpdated');
-      socket.off('ticketDeleted');
-      socket.disconnect();
-    };
-  }, [API_URL, SOCKET_URL]); // Only depend on stable config values
+  fetchTeamMembers();
+
+  socket.on('connect_error', (err) => console.error('Socket error:', err.message));
+  socket.on('ticketCreated', (newTicket) => {
+    if (isMounted) {
+      setTickets(prev => [...prev, {
+        id: newTicket.id.toString(),
+        title: newTicket.title,
+        description: newTicket.description,
+        assignee: teamMembers.find(m => m.id === newTicket.designee_id)?.name || 'Unassigned',
+        assigneeId: newTicket.designee_id,
+        parent: newTicket.status,
+        priority: newTicket.priority,
+      }]);
+    }
+  });
+
+  socket.on('ticketUpdated', (updatedTicket) => {
+    if (isMounted) {
+      setTickets(prev =>
+        prev.map(ticket =>
+          ticket.id === updatedTicket.id.toString()
+            ? { ...ticket, ...updatedTicket, assignee: teamMembers.find(m => m.id === updatedTicket.designee_id)?.name || 'Unassigned' }
+            : ticket
+        )
+      );
+    }
+  });
+
+  socket.on('ticketDeleted', ({ id }) => {
+    if (isMounted) setTickets(prev => prev.filter(ticket => ticket.id !== id.toString()));
+  });
+
+  return () => {
+    isMounted = false;
+    socket.off('ticketCreated');
+    socket.off('ticketUpdated');
+    socket.off('ticketDeleted');
+    socket.disconnect();
+  };
+}, [API_URL, SOCKET_URL, socket, teamMembers]); // Added socket and teamMembers
 
   const toggleSidebar = () => setIsSidebarVisible(!isSidebarVisible);
 
