@@ -34,45 +34,50 @@ function Overview() {
   });
 
   useEffect(() => {
+    let isMounted = true;
+  
     const fetchTickets = async () => {
       try {
         const response = await axios.get(`${API_URL}/cards`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+          timeout: 5000,
         });
-        const mappedTickets = response.data.map(ticket => ({
-          id: ticket.id.toString(),
-          title: ticket.title,
-          description: ticket.description,
-          assignee: ticket.designee,
-          assigneeId: ticket.designee_id,
-          parent: ticket.status,
-          priority: ticket.priority,
-        }));
-        setTickets(mappedTickets);
+        if (isMounted) {
+          const mappedTickets = response.data.map(ticket => ({
+            id: ticket.id.toString(),
+            title: ticket.title,
+            description: ticket.description,
+            assignee: ticket.designee,
+            assigneeId: ticket.designee_id,
+            parent: ticket.status,
+            priority: ticket.priority,
+          }));
+          setTickets(mappedTickets);
+        }
       } catch (error) {
-        console.error('Error fetching tickets:', error.response ? error.response.data : error.message);
+        console.error('Error fetching tickets:', error.message);
       }
     };
-
+  
     const fetchTeamMembers = async () => {
       try {
         const response = await axios.get(`${API_URL}/users`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+          timeout: 5000,
         });
-        setTeamMembers(response.data);
+        if (isMounted) setTeamMembers(response.data);
       } catch (error) {
-        console.error('Error fetching team members:', error.response ? error.response.data : error.message);
+        console.error('Error fetching team members:', error.message);
       }
     };
-
+  
     fetchTickets();
     fetchTeamMembers();
-
-    // Socket event listeners
+  
+    socket.on('connect_error', (err) => console.error('Socket error:', err.message));
     socket.on('ticketCreated', (newTicket) => {
-      setTickets(prev => [
-        ...prev,
-        {
+      if (isMounted) {
+        setTickets(prev => [...prev, {
           id: newTicket.id.toString(),
           title: newTicket.title,
           description: newTicket.description,
@@ -80,40 +85,34 @@ function Overview() {
           assigneeId: newTicket.designee_id,
           parent: newTicket.status,
           priority: newTicket.priority,
-        },
-      ]);
+        }]);
+      }
     });
-
+  
     socket.on('ticketUpdated', (updatedTicket) => {
-      setTickets(prev =>
-        prev.map(ticket =>
-          ticket.id === updatedTicket.id.toString()
-            ? {
-                ...ticket,
-                title: updatedTicket.title,
-                description: updatedTicket.description,
-                priority: updatedTicket.priority,
-                parent: updatedTicket.status,
-                assignee: teamMembers.find(m => m.id === updatedTicket.designee_id)?.name || 'Unassigned',
-                assigneeId: updatedTicket.designee_id,
-              }
-            : ticket
-        )
-      );
+      if (isMounted) {
+        setTickets(prev =>
+          prev.map(ticket =>
+            ticket.id === updatedTicket.id.toString()
+              ? { ...ticket, ...updatedTicket, assignee: teamMembers.find(m => m.id === updatedTicket.designee_id)?.name || 'Unassigned' }
+              : ticket
+          )
+        );
+      }
     });
-
+  
     socket.on('ticketDeleted', ({ id }) => {
-      setTickets(prev => prev.filter(ticket => ticket.id !== id.toString()));
+      if (isMounted) setTickets(prev => prev.filter(ticket => ticket.id !== id.toString()));
     });
-
-    // Cleanup socket connection on unmount
+  
     return () => {
+      isMounted = false;
       socket.off('ticketCreated');
       socket.off('ticketUpdated');
       socket.off('ticketDeleted');
       socket.disconnect();
     };
-  }, [API_URL, SOCKET_URL, socket, teamMembers]);
+  }, [API_URL, SOCKET_URL]); // Only depend on stable config values
 
   const toggleSidebar = () => setIsSidebarVisible(!isSidebarVisible);
 
