@@ -31,6 +31,7 @@
   width: 85%;
   padding: 12px;
   margin-bottom: 15px;
+  min-width: 50px;
   color: #fff;
   background: linear-gradient(135deg, #5a67d8, #434190);
   border: none;
@@ -53,10 +54,7 @@
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
 }
 
-a.linked-sidebar-button {
-  color: #fff;
-  text-decoration: none;
-}
+
 
 /* Main content styles */
 .main-content {
