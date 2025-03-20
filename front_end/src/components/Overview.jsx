@@ -240,26 +240,23 @@ function Overview() {
   return (
     <div className="container">
 
-      {isSidebarVisible && (
-        <div className="sidebar">
-          <button className="ticket-button" onClick={openModal}>
-            Create a Ticket
-          </button>
-          <Link to="/dashboard" style={{ textDecoration: 'none' }}>
-            <button className="linked-sidebar-button">Dashboard</button>
-          </Link>
-          <button className="sidebar-button">All Tickets</button>
-           <Link to="/settings" style={{ textDecoration: 'none' }}>
-            <button className="linked-sidebar-button">Settings</button>
-          </Link>
-        </div>
-      )}
+    {isSidebarVisible && (
+      <div className="sidebar">
+        <button className="nav-button" onClick={openModal}>Create a Ticket</button>
+        <Link to="/dashboard">
+          <button className="nav-button">Dashboard</button>
+        </Link>
+        <button className="nav-button">All Tickets</button>
+        <Link to="/settings">
+          <button className="nav-button">Settings</button>
+        </Link>
+      </div>
+    )}
+
 
       <div className="main-content">
           {/* Logout Button */}
-      <button className="ticket-button logout-button" onClick={handleLogout}>
-        Logout
-      </button>
+          <button className="logout-button" onClick={handleLogout}>Logout</button>
         <button
           onClick={toggleSidebar}
           className="toggle-button"
