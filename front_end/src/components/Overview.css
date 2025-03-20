@@ -78,16 +78,12 @@
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
 }
 
-<<<<<<< HEAD
-
-=======
 /* Ensure <a> buttons match styles */
 a.nav-button,
 a.linked-sidebar-button {
   display: flex;
   text-decoration: none;
 }
->>>>>>> ruben-feature
 
 /* Main content styles */
 .main-content {
