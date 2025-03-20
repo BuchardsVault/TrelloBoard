@@ -10,7 +10,17 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: process.env.NODE_ENV === 'production' ? 'https://trello.azurewebsites.net/' : 'http://localhost:3000',
+    origin: (origin, callback) => {
+      const allowedOrigins = [
+        'http://localhost:3000',
+        'https://trello.azurewebsites.net',
+      ];
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('CORS not allowed'));
+      }
+    },
     methods: ['GET', 'POST'],
   },
 });
@@ -20,17 +30,13 @@ app.use(express.json());
 app.use(express.static('public'));
 
 const serverCA = [fs.readFileSync('./DigiCertGlobalRootCA.crt.pem', 'utf8')];
-
 const dbConfig = {
   host: "trellodb.mysql.database.azure.com",
   user: "myadmin",
   password: "SDSU@2025",
   database: "trello_db",
   port: 3306,
-  ssl: {
-    rejectUnauthorized: true,
-    ca: serverCA,
-  },
+  ssl: { rejectUnauthorized: true, ca: serverCA },
 };
 
 const pool = mysql.createPool(dbConfig);
@@ -47,25 +53,32 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// Socket.IO Authentication Middleware
 io.use((socket, next) => {
+  console.log('Handshake auth:', socket.handshake.auth);
   const token = socket.handshake.auth.token;
-  if (!token) return next(new Error('Authentication error: No token provided'));
+  if (!token) {
+    console.error('No token provided');
+    return next(new Error('Authentication error: No token provided'));
+  }
 
-  jwt.verify(token, JWT_SECRET, (err, decoded) => {
-    if (err) return next(new Error('Authentication error: Invalid token'));
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    console.log('Decoded token:', decoded);
     socket.user = decoded;
     next();
-  });
+  } catch (err) {
+    console.error('JWT verification failed:', err.message);
+    return next(new Error('Authentication error: Invalid token'));
+  }
 });
 
 io.on('connection', (socket) => {
+  console.log('Client origin:', socket.handshake.headers.origin);
   console.log(`User ${socket.user.id} connected`);
   socket.on('disconnect', () => {
     console.log(`User ${socket.user.id} disconnected`);
   });
 });
-
 // Login endpoint
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
