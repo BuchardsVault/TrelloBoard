@@ -25,15 +25,6 @@
   font-weight: 600;
 }
 
-<<<<<<< HEAD
-.ticket-button,
-.sidebar-button,
-.linked-sidebar-button {
-  width: 85%;
-  padding: 12px;
-  margin-bottom: 15px;
-  min-width: 50px;
-=======
 /* 🔹 Navbar Container */
 .navbar {
   display: flex;
@@ -57,7 +48,6 @@
   height: 40px;  /* Matches sidebar buttons */
   padding: 10px;
   margin: 1px 8px;  /* Small vertical and horizontal spacing */
->>>>>>> ruben-feature
   color: #fff;
   background: linear-gradient(135deg, #5a67d8, #434190);
   border: none;
