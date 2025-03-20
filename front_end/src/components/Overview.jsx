@@ -3,12 +3,13 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Droppable } from './Droppable';
 import { Draggable } from './Draggable';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import io from 'socket.io-client'; // Import socket.io-client
 import './Overview.css';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 
 function Overview() {
+  const navigate = useNavigate();
   const containers = ['todo', 'in-progress', 'done'];
   const [tickets, setTickets] = useState([]);
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
@@ -229,9 +230,19 @@ function Overview() {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    navigate('/login');
+  };
+
   // Rest of the JSX remains unchanged
   return (
     <div className="container">
+      {/* Logout Button */}
+      <button className="ticket-button logout-button" onClick={handleLogout}>
+        Logout
+      </button>
       {isSidebarVisible && (
         <div className="sidebar">
           <button className="ticket-button" onClick={openModal}>
