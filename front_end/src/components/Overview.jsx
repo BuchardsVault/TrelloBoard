@@ -245,9 +245,13 @@ function Overview() {
           <button className="ticket-button" onClick={openModal}>
             Create a Ticket
           </button>
-          <Link to="/dashboard" className="linked-sidebar-button">Dashboard</Link>
+          <Link to="/dashboard" style={{ textDecoration: 'none' }}>
+            <button className="linked-sidebar-button">Dashboard</button>
+          </Link>
           <button className="sidebar-button">All Tickets</button>
-          <Link to="/settings" className="linked-sidebar-button">Settings</Link>
+           <Link to="/settings" style={{ textDecoration: 'none' }}>
+            <button className="linked-sidebar-button">Settings</button>
+          </Link>
         </div>
       )}
 
