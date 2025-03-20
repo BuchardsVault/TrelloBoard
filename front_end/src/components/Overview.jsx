@@ -3,10 +3,10 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Droppable } from './Droppable';
 import { Draggable } from './Draggable';
-import { Link, useNavigate } from 'react-router-dom';
-import io from 'socket.io-client'; // Import socket.io-client
-import './Overview.css';
-import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { Link, useNavigate } from 'react-router-dom'; 
+import io from 'socket.io-client'; // socket-io clinet for the front to connect 
+import './Overview.css'; 
+import { FaChevronLeft, FaChevronRight } from 'react-icons/fa'; 
 
 function Overview() {
   const navigate = useNavigate();
@@ -236,13 +236,10 @@ function Overview() {
     navigate('/login');
   };
 
-  // Rest of the JSX remains unchanged
+  
   return (
     <div className="container">
-      {/* Logout Button */}
-      <button className="ticket-button logout-button" onClick={handleLogout}>
-        Logout
-      </button>
+
       {isSidebarVisible && (
         <div className="sidebar">
           <button className="ticket-button" onClick={openModal}>
@@ -255,6 +252,10 @@ function Overview() {
       )}
 
       <div className="main-content">
+          {/* Logout Button */}
+      <button className="ticket-button logout-button" onClick={handleLogout}>
+        Logout
+      </button>
         <button
           onClick={toggleSidebar}
           className="toggle-button"
