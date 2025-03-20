@@ -257,6 +257,12 @@ a.linked-sidebar-button {
   background-color: #da190b;
 }
 
+.logout-button {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .sidebar {
