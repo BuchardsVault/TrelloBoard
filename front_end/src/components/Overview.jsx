@@ -3,11 +3,13 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Droppable } from './Droppable';
 import { Draggable } from './Draggable';
-import { Link } from 'react-router-dom';
-import './Overview.css';
-import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { Link, useNavigate } from 'react-router-dom'; 
+import io from 'socket.io-client'; // socket-io clinet for the front to connect 
+import './Overview.css'; 
+import { FaChevronLeft, FaChevronRight } from 'react-icons/fa'; 
 
 function Overview() {
+  const navigate = useNavigate();
   const containers = ['todo', 'in-progress', 'done'];
   const [tickets, setTickets] = useState([]);
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
@@ -17,64 +19,107 @@ function Overview() {
     title: '',
     designee_id: null,
     description: '',
-    priority: 1
+    priority: 1,
   });
   const [editTicket, setEditTicket] = useState(null);
   const [teamMembers, setTeamMembers] = useState([]);
 
-  // Use relative URL in production, localhost in development
   const API_URL = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:3000/api');
+  const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || (process.env.NODE_ENV === 'production' ? '/' : 'http://localhost:3000');
   const currentUser = JSON.parse(localStorage.getItem('user')) || {};
 
+  // Initialize socket connection
+  const socket = io('https://trello.azurewebsites.net', {
+    auth: { token: localStorage.getItem('token') }, // Send JWT for authentication
+  });
+
   useEffect(() => {
+    let isMounted = true;
+  
     const fetchTickets = async () => {
       try {
         const response = await axios.get(`${API_URL}/cards`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+          timeout: 5000,
         });
-        const mappedTickets = response.data.map(ticket => ({
-          id: ticket.id.toString(),
-          title: ticket.title,
-          description: ticket.description,
-          assignee: ticket.designee,
-          assigneeId: ticket.designee_id,
-          parent: ticket.status,
-          priority: ticket.priority
-        }));
-        setTickets(mappedTickets);
+        if (isMounted) {
+          const mappedTickets = response.data.map(ticket => ({
+            id: ticket.id.toString(),
+            title: ticket.title,
+            description: ticket.description,
+            assignee: ticket.designee,
+            assigneeId: ticket.designee_id,
+            parent: ticket.status,
+            priority: ticket.priority,
+          }));
+          setTickets(mappedTickets);
+        }
       } catch (error) {
-        console.error('Error fetching tickets:', error.response ? error.response.data : error.message);
+        console.error('Error fetching tickets:', error.message);
       }
     };
-
+  
     const fetchTeamMembers = async () => {
       try {
         const response = await axios.get(`${API_URL}/users`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+          timeout: 5000,
         });
-        setTeamMembers(response.data);
+        if (isMounted) setTeamMembers(response.data);
       } catch (error) {
-        console.error('Error fetching team members:', error.response ? error.response.data : error.message);
+        console.error('Error fetching team members:', error.message);
       }
     };
-
+  
     fetchTickets();
-    fetchTeamMembers();
-  }, [API_URL]);
+  fetchTeamMembers();
 
-  const toggleSidebar = () => {
-    setIsSidebarVisible(!isSidebarVisible);
+  socket.on('connect_error', (err) => console.error('Socket error:', err.message));
+  socket.on('ticketCreated', (newTicket) => {
+    if (isMounted) {
+      setTickets(prev => [...prev, {
+        id: newTicket.id.toString(),
+        title: newTicket.title,
+        description: newTicket.description,
+        assignee: teamMembers.find(m => m.id === newTicket.designee_id)?.name || 'Unassigned',
+        assigneeId: newTicket.designee_id,
+        parent: newTicket.status,
+        priority: newTicket.priority,
+      }]);
+    }
+  });
+
+  socket.on('ticketUpdated', (updatedTicket) => {
+    if (isMounted) {
+      setTickets(prev =>
+        prev.map(ticket =>
+          ticket.id === updatedTicket.id.toString()
+            ? { ...ticket, ...updatedTicket, assignee: teamMembers.find(m => m.id === updatedTicket.designee_id)?.name || 'Unassigned' }
+            : ticket
+        )
+      );
+    }
+  });
+
+  socket.on('ticketDeleted', ({ id }) => {
+    if (isMounted) setTickets(prev => prev.filter(ticket => ticket.id !== id.toString()));
+  });
+
+  return () => {
+    isMounted = false;
+    socket.off('ticketCreated');
+    socket.off('ticketUpdated');
+    socket.off('ticketDeleted');
+    socket.disconnect();
   };
+}, [API_URL, SOCKET_URL, socket, teamMembers]); // Added socket and teamMembers
+
+  const toggleSidebar = () => setIsSidebarVisible(!isSidebarVisible);
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => {
     setIsModalOpen(false);
-    setNewTicket({
-      title: '',
-      designee_id: null,
-      description: '',
-      priority: 1
-    });
+    setNewTicket({ title: '', designee_id: null, description: '', priority: 1 });
   };
 
   const openEditModal = (ticket) => {
@@ -83,7 +128,7 @@ function Overview() {
       title: ticket.title,
       description: ticket.description || '',
       priority: ticket.priority,
-      designee_id: ticket.assigneeId
+      designee_id: ticket.assigneeId,
     });
     setIsEditModalOpen(true);
   };
@@ -97,7 +142,7 @@ function Overview() {
     const { name, value } = e.target;
     setNewTicket(prev => ({
       ...prev,
-      [name]: name === 'designee_id' ? (value === '' ? null : parseInt(value)) : value
+      [name]: name === 'designee_id' ? (value === '' ? null : parseInt(value)) : value,
     }));
   };
 
@@ -105,7 +150,7 @@ function Overview() {
     const { name, value } = e.target;
     setEditTicket(prev => ({
       ...prev,
-      [name]: name === 'designee_id' ? (value === '' ? null : parseInt(value)) : value
+      [name]: name === 'designee_id' ? (value === '' ? null : parseInt(value)) : value,
     }));
   };
 
@@ -119,25 +164,13 @@ function Overview() {
       priority: parseInt(newTicket.priority),
       status: 'todo',
       author_id: currentUser.id,
-      designee_id: newTicket.designee_id
+      designee_id: newTicket.designee_id,
     };
 
     try {
-      const response = await axios.post(
-        `${API_URL}/cards`,
-        ticketData,
-        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
-      );
-      const createdTicket = {
-        id: response.data.id.toString(),
-        title: response.data.title,
-        description: response.data.description,
-        assignee: teamMembers.find(m => m.id === response.data.designee_id)?.name || 'Unassigned',
-        assigneeId: response.data.designee_id,
-        parent: response.data.status,
-        priority: response.data.priority
-      };
-      setTickets(prevTickets => [...prevTickets, createdTicket]);
+      await axios.post(`${API_URL}/cards`, ticketData, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      });
       closeModal();
     } catch (error) {
       console.error('Error creating ticket:', error.response ? error.response.data : error.message);
@@ -152,29 +185,13 @@ function Overview() {
       title: editTicket.title,
       description: editTicket.description || null,
       priority: parseInt(editTicket.priority),
-      designee_id: editTicket.designee_id
+      designee_id: editTicket.designee_id,
     };
 
     try {
-      await axios.put(
-        `${API_URL}/cards/${editTicket.id}`,
-        ticketData,
-        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
-      );
-      setTickets(prevTickets =>
-        prevTickets.map(ticket =>
-          ticket.id === editTicket.id
-            ? {
-                ...ticket,
-                title: editTicket.title,
-                description: editTicket.description,
-                priority: editTicket.priority,
-                assignee: teamMembers.find(m => m.id === editTicket.designee_id)?.name || 'Unassigned',
-                assigneeId: editTicket.designee_id
-              }
-            : ticket
-        )
-      );
+      await axios.put(`${API_URL}/cards/${editTicket.id}`, ticketData, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      });
       closeEditModal();
     } catch (error) {
       console.error('Error updating ticket:', error.response ? error.response.data : error.message);
@@ -185,11 +202,9 @@ function Overview() {
     if (!window.confirm('Are you sure you want to delete this ticket?')) return;
 
     try {
-      await axios.delete(
-        `${API_URL}/cards/${editTicket.id}`,
-        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
-      );
-      setTickets(prevTickets => prevTickets.filter(ticket => ticket.id !== editTicket.id));
+      await axios.delete(`${API_URL}/cards/${editTicket.id}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      });
       closeEditModal();
     } catch (error) {
       console.error('Error deleting ticket:', error.response ? error.response.data : error.message);
@@ -203,16 +218,10 @@ function Overview() {
     try {
       const ticketToUpdate = tickets.find(t => t.id === active.id);
       if (ticketToUpdate) {
-        const updatedTicket = { ...ticketToUpdate, parent: over.id };
         await axios.put(
           `${API_URL}/cards/${active.id}`,
           { status: over.id },
           { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
-        );
-        setTickets(prevTickets =>
-          prevTickets.map(ticket =>
-            ticket.id === active.id ? updatedTicket : ticket
-          )
         );
       }
     } catch (error) {
@@ -220,20 +229,33 @@ function Overview() {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    navigate('/login');
+  };
+
+  
   return (
     <div className="container">
-      {isSidebarVisible && (
-        <div className="sidebar">
-          <button className="ticket-button" onClick={openModal}>
-            Create a Ticket
-          </button>
-          <Link to="/dashboard" className="linked-sidebar-button">Dashboard</Link>
-          <button className="sidebar-button">All Tickets</button>
-          <Link to="/settings" className="linked-sidebar-button">Settings</Link>
-        </div>
-      )}
+
+    {isSidebarVisible && (
+      <div className="sidebar">
+        <button className="nav-button" onClick={openModal}>Create a Ticket</button>
+        <Link to="/dashboard">
+          <button className="nav-button">Dashboard</button>
+        </Link>
+        <button className="nav-button">All Tickets</button>
+        <Link to="/settings">
+          <button className="nav-button">Settings</button>
+        </Link>
+      </div>
+    )}
+
 
       <div className="main-content">
+          {/* Logout Button */}
+          <button className="logout-button" onClick={handleLogout}>Logout</button>
         <button
           onClick={toggleSidebar}
           className="toggle-button"

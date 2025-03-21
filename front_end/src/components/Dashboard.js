@@ -1,117 +1,55 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import './Dashboard.css';
 
 function Dashboard() {
+  const navigate = useNavigate();
+  const [userName, setUserName] = useState('User'); // Default fallback
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        const user = JSON.parse(storedUser);
+        if (user && user.name) {
+          setUserName(user.name); // Set name from stored user object
+        }
+      } catch (error) {
+        console.error('Error parsing user from localStorage:', error);
+        // Optionally redirect to login if data is corrupt
+        navigate('/login');
+      }
+    } else {
+      // No user data found, redirect to login
+      navigate('/login');
+    }
+  }, [navigate]); // Add navigate as dependency
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    navigate('/login');
+  };
+
   return (
-    <div style={{
-      padding: '20px',
-      backgroundColor: '#f4f5f7',
-      minHeight: '100vh',
-      fontFamily: 'Arial, sans-serif',
-      display: 'flex',
-      justifyContent: 'center', // Center horizontally
-      alignItems: 'center', // Center vertically
-    }}>
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '40px', // Space between message and buttons
-      }}>
+    <div className="dashboard-container">
+      {/* Logout Button */}
+      <button className="dashboard-button logout-button" onClick={handleLogout}>
+        Logout
+      </button>
+
+      {/* Main Content */}
+      <div className="dashboard-content">
         {/* Welcome Message */}
-        <h1 style={{
-          fontSize: '48px',
-          fontWeight: '700',
-          color: '#172b4d',
-          margin: '0',
-          textAlign: 'center',
-          letterSpacing: '1px',
-          textTransform: 'uppercase',
-        }}>Welcome to Your Dashboard</h1>
+        <h1 className="dashboard-title">Welcome {userName}</h1>
 
         {/* Navigation Buttons */}
-        <div style={{
-          display: 'flex',
-          gap: '20px',
-          justifyContent: 'center',
-          flexWrap: 'wrap',
-        }}>
+        <div className="dashboard-buttons">
           <Link to="/settings" style={{ textDecoration: 'none' }}>
-            <button style={{
-              padding: '12px 24px',
-              fontSize: '16px',
-              fontWeight: '500',
-              color: '#fff',
-              background: 'linear-gradient(135deg, #5a67d8, #434190)',
-              border: 'none',
-              borderRadius: '50px',
-              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
-              cursor: 'pointer',
-              transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-              outline: 'none',
-            }}
-            onMouseOver={(e) => {
-              e.target.style.transform = 'scale(1.05)';
-              e.target.style.boxShadow = '0 6px 12px rgba(0, 0, 0, 0.25)';
-            }}
-            onMouseOut={(e) => {
-              e.target.style.transform = 'scale(1)';
-              e.target.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
-            }}>
-              Settings
-            </button>
+            <button className="dashboard-button">Settings</button>
           </Link>
-
           <Link to="/overview" style={{ textDecoration: 'none' }}>
-            <button style={{
-              padding: '12px 24px',
-              fontSize: '16px',
-              fontWeight: '500',
-              color: '#fff',
-              background: 'linear-gradient(135deg, #5a67d8, #434190)',
-              border: 'none',
-              borderRadius: '50px',
-              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
-              cursor: 'pointer',
-              transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-              outline: 'none',
-            }}
-            onMouseOver={(e) => {
-              e.target.style.transform = 'scale(1.05)';
-              e.target.style.boxShadow = '0 6px 12px rgba(0, 0, 0, 0.25)';
-            }}
-            onMouseOut={(e) => {
-              e.target.style.transform = 'scale(1)';
-              e.target.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
-            }}>
-              Overview
-            </button>
-          </Link>
-
-          <Link to="/teams" style={{ textDecoration: 'none' }}>
-            <button style={{
-              padding: '12px 24px',
-              fontSize: '16px',
-              fontWeight: '500',
-              color: '#fff',
-              background: 'linear-gradient(135deg, #5a67d8, #434190)',
-              border: 'none',
-              borderRadius: '50px',
-              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
-              cursor: 'pointer',
-              transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-              outline: 'none',
-            }}
-            onMouseOver={(e) => {
-              e.target.style.transform = 'scale(1.05)';
-              e.target.style.boxShadow = '0 6px 12px rgba(0, 0, 0, 0.25)';
-            }}
-            onMouseOut={(e) => {
-              e.target.style.transform = 'scale(1)';
-              e.target.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
-            }}>
-              Teams
-            </button>
+            <button className="dashboard-button">Overview</button>
           </Link>
         </div>
       </div>

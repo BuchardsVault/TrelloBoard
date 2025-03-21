@@ -25,36 +25,63 @@
   font-weight: 600;
 }
 
-.ticket-button,
-.sidebar-button,
-.linked-sidebar-button {
-  width: 85%;
-  padding: 12px;
-  margin-bottom: 15px;
+/* 🔹 Navbar Container */
+.navbar {
+  display: flex;
+  justify-content: flex-end;  /* Aligns buttons to the right */
+  align-items: center;
+  padding: 10px 20px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  z-index: 1000;
+}
+
+/* 🔹 Sidebar & Navbar Buttons (Including Logout) */
+.nav-button,
+.logout-button {
+  width: 140px;  /* Matches sidebar buttons */
+  height: 40px;  /* Matches sidebar buttons */
+  padding: 10px;
+  margin: 1px 8px;  /* Small vertical and horizontal spacing */
   color: #fff;
   background: linear-gradient(135deg, #5a67d8, #434190);
   border: none;
-  border-radius: 50px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-radius: 6px;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  font-size: 1em;
+  font-size: 0.9rem;
   font-weight: 500;
-  text-decoration: none;
-  display: inline-block;
   text-align: center;
-  appearance: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.ticket-button:hover,
+/* 🔹 Ensure Vertical Spacing for Sidebar Buttons */
+.sidebar button,
+.sidebar a {
+  margin-bottom: 10px;  /* Adds vertical spacing */
+}
+
+/* Hover Effect for Navbar and Sidebar Buttons */
+.nav-button:hover,
+.logout-button:hover,
 .sidebar-button:hover,
 .linked-sidebar-button:hover {
   transform: scale(1.05);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
 }
 
+/* Ensure <a> buttons match styles */
+a.nav-button,
 a.linked-sidebar-button {
-  color: #fff;
+  display: flex;
   text-decoration: none;
 }
 
@@ -67,6 +94,7 @@ a.linked-sidebar-button {
   background-color: #f9fafb;
 }
 
+/* Sidebar toggle button */
 .toggle-button {
   align-self: flex-start;
   margin: 0 0 20px 10px;
@@ -74,8 +102,8 @@ a.linked-sidebar-button {
   color: #fff;
   background: linear-gradient(135deg, #5a67d8, #434190);
   border: none;
-  border-radius: 50px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-radius: 6px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   font-size: 0.9em;
@@ -83,9 +111,10 @@ a.linked-sidebar-button {
 
 .toggle-button:hover {
   transform: scale(1.05);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
 }
 
+/* Board container (for draggable tickets) */
 .board-container {
   display: flex;
   justify-content: center;
@@ -119,6 +148,7 @@ a.linked-sidebar-button {
   color: #1f2937;
 }
 
+/* Droppable area styles */
 .droppable {
   min-height: 500px;
   padding: 15px;

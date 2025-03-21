@@ -3,25 +3,40 @@ const mysql = require('mysql2/promise');
 const cors = require('cors');
 const fs = require('fs');
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
+const http = require('http');
+const { Server } = require('socket.io');
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: (origin, callback) => {
+      const allowedOrigins = [
+        'http://localhost:3000',
+        'https://trello.azurewebsites.net',
+      ];
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('CORS not allowed'));
+      }
+    },
+    methods: ['GET', 'POST'],
+  },
+});
+
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
 const serverCA = [fs.readFileSync('./DigiCertGlobalRootCA.crt.pem', 'utf8')];
-
 const dbConfig = {
   host: "trellodb.mysql.database.azure.com",
   user: "myadmin",
   password: "SDSU@2025",
   database: "trello_db",
   port: 3306,
-  ssl: {
-    rejectUnauthorized: true,
-    ca: serverCA
-  }
+  ssl: { rejectUnauthorized: true, ca: serverCA },
 };
 
 const pool = mysql.createPool(dbConfig);
@@ -38,7 +53,33 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// Login endpoint (unchanged)
+io.use((socket, next) => {
+  console.log('Handshake auth:', socket.handshake.auth);
+  const token = socket.handshake.auth.token;
+  if (!token) {
+    console.error('No token provided');
+    return next(new Error('Authentication error: No token provided'));
+  }
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    console.log('Decoded token:', decoded);
+    socket.user = decoded;
+    next();
+  } catch (err) {
+    console.error('JWT verification failed:', err.message);
+    return next(new Error('Authentication error: Invalid token'));
+  }
+});
+
+io.on('connection', (socket) => {
+  console.log('Client origin:', socket.handshake.headers.origin);
+  console.log(`User ${socket.user.id} connected`);
+  socket.on('disconnect', () => {
+    console.log(`User ${socket.user.id} disconnected`);
+  });
+});
+// Login endpoint
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -48,7 +89,7 @@ app.post('/api/login', async (req, res) => {
     }
 
     const user = users[0];
-    if (user.password !== password) { // Replace with bcrypt.compare if hashed
+    if (user.password !== password) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
@@ -96,6 +137,75 @@ app.get('/api/users', authenticateToken, async (req, res) => {
   }
 });
 
+// Get current user data
+app.get('/api/users/:id', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.id !== parseInt(req.params.id)) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+    const [rows] = await pool.query('SELECT id, name, email FROM users WHERE id = ?', [req.params.id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json(rows[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to fetch user data' });
+  }
+});
+
+// Update user data (no hashing)
+app.put('/api/users/:id', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.id !== parseInt(req.params.id)) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    const { name, email, password, currentPassword } = req.body;
+    const updates = {};
+
+    // Fetch current user data for password verification
+    const [users] = await pool.query('SELECT password FROM users WHERE id = ?', [req.params.id]);
+    if (users.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const user = users[0];
+
+    // Verify current password if changing password
+    if (password) {
+      if (!currentPassword) {
+        return res.status(400).json({ error: 'Current password required to change password' });
+      }
+      if (currentPassword !== user.password) {
+        return res.status(401).json({ error: 'Current password is incorrect' });
+      }
+      updates.password = password; // Plain text, no hashing
+    }
+
+    if (name) updates.name = name;
+    if (email) updates.email = email;
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ error: 'No changes provided' });
+    }
+
+    const [result] = await pool.query(
+      'UPDATE users SET ? WHERE id = ?',
+      [updates, req.params.id]
+    );
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const [updatedUser] = await pool.query('SELECT id, name, email FROM users WHERE id = ?', [req.params.id]);
+    res.json(updatedUser[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to update user' });
+  }
+});
+
 // Create a ticket
 app.post('/api/cards', authenticateToken, async (req, res) => {
   try {
@@ -123,14 +233,16 @@ app.post('/api/cards', authenticateToken, async (req, res) => {
       WHERE c.id = ?
     `, [result.insertId]);
 
-    res.status(201).json(newTicket[0]);
+    const ticket = newTicket[0];
+    io.emit('ticketCreated', ticket);
+    res.status(201).json(ticket);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Failed to create ticket' });
   }
 });
 
-// Update ticket (expanded to handle all fields)
+// Update ticket
 app.put('/api/cards/:id', authenticateToken, async (req, res) => {
   try {
     const { title, description, priority, status, designee_id } = req.body;
@@ -148,7 +260,27 @@ app.put('/api/cards/:id', authenticateToken, async (req, res) => {
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: 'Ticket not found' });
     }
-    res.json({ success: true });
+
+    const [updatedTicket] = await pool.query(`
+      SELECT 
+        c.id,
+        c.title,
+        c.description,
+        c.priority,
+        c.status,
+        u1.name AS author,
+        u2.name AS designee,
+        c.author_id,
+        c.designee_id
+      FROM cards c
+      LEFT JOIN users u1 ON c.author_id = u1.id
+      LEFT JOIN users u2 ON c.designee_id = u2.id
+      WHERE c.id = ?
+    `, [req.params.id]);
+
+    const ticket = updatedTicket[0];
+    io.emit('ticketUpdated', ticket);
+    res.json(ticket);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Failed to update ticket' });
@@ -162,6 +294,8 @@ app.delete('/api/cards/:id', authenticateToken, async (req, res) => {
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: 'Ticket not found' });
     }
+
+    io.emit('ticketDeleted', { id: parseInt(req.params.id) });
     res.json({ success: true });
   } catch (error) {
     console.error(error);
@@ -170,7 +304,7 @@ app.delete('/api/cards/:id', authenticateToken, async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
