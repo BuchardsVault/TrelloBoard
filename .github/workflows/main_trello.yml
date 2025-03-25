@@ -35,10 +35,10 @@ jobs:
       - name: Prepare deployment package
         run: |
           mkdir -p dist/public
-          cp back_end/server.js dist/
-          cp back_end/package.json dist/
-          cp back_end/package-lock.json dist/
-          cp back_end/DigiCertGlobalRootCA.crt.pem dist/  # Ensure SSL cert is included
+          # Copy entire back_end directory (excluding node_modules)
+          cp -r back_end/* dist/
+          # Remove node_modules from dist if it got copied
+          rm -rf dist/node_modules
           if [ -d "front_end/build" ]; then
             cp -r front_end/build/* dist/public/
           else
