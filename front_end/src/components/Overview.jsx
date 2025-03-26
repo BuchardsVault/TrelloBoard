@@ -30,12 +30,10 @@ function Overview() {
 
   useEffect(() => {
     let isMounted = true;
-    // Initialize socket inside useEffect
     const socket = io(SOCKET_URL, {
       auth: { token: localStorage.getItem('token') },
     });
 
-    // Socket event listeners
     socket.on('connect', () => {
       console.log('Socket connected:', socket.id);
     });
@@ -125,13 +123,12 @@ function Overview() {
     fetchTickets();
     fetchTeamMembers();
 
-    // Cleanup
     return () => {
       isMounted = false;
       socket.disconnect();
       console.log('Socket cleanup complete');
     };
-  }, [API_URL, SOCKET_URL]); // Dependencies limited to URL constants
+  }, [API_URL, SOCKET_URL, teamMembers]); // Added teamMembers to dependency array
 
   const toggleSidebar = () => setIsSidebarVisible(!isSidebarVisible);
 
@@ -187,12 +184,10 @@ function Overview() {
     };
 
     try {
-      const response = await axios.post(`${API_URL}/cards`, ticketData, {
+      await axios.post(`${API_URL}/cards`, ticketData, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
       closeModal();
-      // Optionally emit via socket if server doesn't already
-      // socket.emit('createTicket', response.data);
     } catch (error) {
       console.error('Error creating ticket:', error.response ? error.response.data : error.message);
     }
@@ -210,12 +205,10 @@ function Overview() {
     };
 
     try {
-      const response = await axios.put(`${API_URL}/cards/${editTicket.id}`, ticketData, {
+      await axios.put(`${API_URL}/cards/${editTicket.id}`, ticketData, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
       closeEditModal();
-      // Optionally emit via socket if server doesn't already
-      // socket.emit('updateTicket', response.data);
     } catch (error) {
       console.error('Error updating ticket:', error.response ? error.response.data : error.message);
     }
