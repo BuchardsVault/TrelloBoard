@@ -29,7 +29,7 @@ function Overview() {
   const currentUser = JSON.parse(localStorage.getItem('user')) || {};
 
   // Initialize socket connection
-  const socket = io('https://trello.azurewebsites.net', {
+  const socket = io(SOCKET_URL, {
     auth: { token: localStorage.getItem('token') }, // Send JWT for authentication
   });
 
