@@ -3,6 +3,9 @@ const router = express.Router();
 const { authenticateToken } = require('../middleware/auth');
 const { getAllCards, createCard, updateCard, deleteCard } = require('../services/db');
 
+/**
+ * Purpose: Retreive all cards from database
+ */
 router.get('/cards', authenticateToken, async (req, res) => {
   try {
     const cards = await getAllCards();
@@ -13,6 +16,9 @@ router.get('/cards', authenticateToken, async (req, res) => {
   }
 });
 
+/**
+ * Purpose: Adds a new card to database upon creation 
+ */
 router.post('/cards', authenticateToken, async (req, res) => {
   try {
     const { title, description, priority, status, designee_id } = req.body;
@@ -26,6 +32,9 @@ router.post('/cards', authenticateToken, async (req, res) => {
   }
 });
 
+/**
+ * Purpose: Updates an existing card with 'id' in database 
+ */
 router.put('/cards/:id', authenticateToken, async (req, res) => {
   try {
     const { title, description, priority, status, designee_id } = req.body;
@@ -45,6 +54,9 @@ router.put('/cards/:id', authenticateToken, async (req, res) => {
   }
 });
 
+/**
+ * Purpose: Deletes and existing card with 'id' in database
+ */
 router.delete('/cards/:id', authenticateToken, async (req, res) => {
   try {
     const result = await deleteCard(req.params.id);

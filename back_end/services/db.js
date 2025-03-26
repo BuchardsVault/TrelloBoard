@@ -1,6 +1,6 @@
 const { pool } = require('../config/database');
 
-// User-related queries
+/***********  User Related Queries for DB *************/
 async function getUserByEmail(email) {
   const [users] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
   return users[0] || null;
@@ -24,7 +24,7 @@ async function updateUser(id, updates) {
   return getUserById(id); // Return updated user
 }
 
-// Card-related queries
+/***********  Card Related Queries for DB *************/
 async function getAllCards() {
   const [rows] = await pool.query(`
     SELECT 
@@ -74,6 +74,9 @@ async function deleteCard(id) {
   return { id: parseInt(id) };
 }
 
+/**
+ * Exports the query calls to be referenced throughout the code 
+ */
 module.exports = {
   getUserByEmail,
   getUserById,
