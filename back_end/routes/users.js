@@ -3,6 +3,9 @@ const router = express.Router();
 const { authenticateToken } = require('../middleware/auth');
 const { getAllUsers, getUserById, updateUser, getUserByEmail } = require('../services/db');
 
+/**
+ * Purpose: Gets all users from User table in database 
+ */
 router.get('/users', authenticateToken, async (req, res) => {
   try {
     const users = await getAllUsers();
@@ -13,6 +16,9 @@ router.get('/users', authenticateToken, async (req, res) => {
   }
 });
 
+/**
+ * Purpose: gets a specific user from database with 'id' 
+ */
 router.get('/users/:id', authenticateToken, async (req, res) => {
   try {
     if (req.user.id !== parseInt(req.params.id)) {
@@ -29,6 +35,9 @@ router.get('/users/:id', authenticateToken, async (req, res) => {
   }
 });
 
+/**
+ * Purpose: Updates a specific existing user in database with 'id' 
+ */
 router.put('/users/:id', authenticateToken, async (req, res) => {
   try {
     if (req.user.id !== parseInt(req.params.id)) {

@@ -4,6 +4,9 @@ const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = require('../config/jwt');
 const { getUserByEmail } = require('../services/db');
 
+/**
+ * Purpose: Routes the proper authenicated login request 
+ */
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
   try {
