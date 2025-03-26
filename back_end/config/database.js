@@ -1,7 +1,7 @@
 const mysql = require('mysql2/promise'); 
 const fs = require('fs'); // File system, used to read the cert 
 
-const serverCA = [fs.readFileSync('../DigiCertGlobalRootCA.crt.pem', 'utf8')];
+const serverCA = [fs.readFileSync('./DigiCertGlobalRootCA.crt.pem', 'utf8')];
 const dbConfig = {
   host: "trellodb.mysql.database.azure.com",
   user: "myadmin",
