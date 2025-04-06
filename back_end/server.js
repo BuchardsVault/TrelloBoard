@@ -12,12 +12,9 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: corsConfig });
 
-app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
-
-// Attach io to requests
-app.use(configureSocket(io));
+app.use(configureSocket(io)); // Attach io to requests
 
 // Routes
 app.use('/api', authRoutes);

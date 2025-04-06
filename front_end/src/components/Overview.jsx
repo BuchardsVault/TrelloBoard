@@ -3,10 +3,10 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Droppable } from './Droppable';
 import { Draggable } from './Draggable';
-import { Link, useNavigate } from 'react-router-dom'; 
-import io from 'socket.io-client'; // socket-io clinet for the front to connect 
-import './Overview.css'; 
-import { FaChevronLeft, FaChevronRight } from 'react-icons/fa'; 
+import { Link, useNavigate } from 'react-router-dom';
+import io from 'socket.io-client';
+import './Overview.css';
+import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 
 function Overview() {
   const navigate = useNavigate();
@@ -28,14 +28,63 @@ function Overview() {
   const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || (process.env.NODE_ENV === 'production' ? '/' : 'http://localhost:3000');
   const currentUser = JSON.parse(localStorage.getItem('user')) || {};
 
-  // Initialize socket connection
-  const socket = io('https://trello.azurewebsites.net', {
-    auth: { token: localStorage.getItem('token') }, // Send JWT for authentication
-  });
-
   useEffect(() => {
     let isMounted = true;
-  
+    const socket = io(SOCKET_URL, {
+      auth: { token: localStorage.getItem('token') },
+    });
+
+    socket.on('connect', () => {
+      console.log('Socket connected:', socket.id);
+    });
+
+    socket.on('connect_error', (err) => {
+      console.error('Socket connection error:', err.message);
+    });
+
+    socket.on('disconnect', (reason) => {
+      console.log('Socket disconnected:', reason);
+    });
+
+    socket.on('ticketCreated', (newTicket) => {
+      if (isMounted) {
+        setTickets((prev) => [
+          ...prev,
+          {
+            id: newTicket.id.toString(),
+            title: newTicket.title,
+            description: newTicket.description,
+            assignee: teamMembers.find((m) => m.id === newTicket.designee_id)?.name || 'Unassigned',
+            assigneeId: newTicket.designee_id,
+            parent: newTicket.status,
+            priority: newTicket.priority,
+          },
+        ]);
+      }
+    });
+
+    socket.on('ticketUpdated', (updatedTicket) => {
+      if (isMounted) {
+        setTickets((prev) =>
+          prev.map((ticket) =>
+            ticket.id === updatedTicket.id.toString()
+              ? {
+                  ...ticket,
+                  ...updatedTicket,
+                  assignee: teamMembers.find((m) => m.id === updatedTicket.designee_id)?.name || 'Unassigned',
+                }
+              : ticket
+          )
+        );
+      }
+    });
+
+    socket.on('ticketDeleted', ({ id }) => {
+      if (isMounted) {
+        setTickets((prev) => prev.filter((ticket) => ticket.id !== id.toString()));
+      }
+    });
+
     const fetchTickets = async () => {
       try {
         const response = await axios.get(`${API_URL}/cards`, {
@@ -43,7 +92,7 @@ function Overview() {
           timeout: 5000,
         });
         if (isMounted) {
-          const mappedTickets = response.data.map(ticket => ({
+          const mappedTickets = response.data.map((ticket) => ({
             id: ticket.id.toString(),
             title: ticket.title,
             description: ticket.description,
@@ -58,7 +107,7 @@ function Overview() {
         console.error('Error fetching tickets:', error.message);
       }
     };
-  
+
     const fetchTeamMembers = async () => {
       try {
         const response = await axios.get(`${API_URL}/users`, {
@@ -70,49 +119,16 @@ function Overview() {
         console.error('Error fetching team members:', error.message);
       }
     };
-  
+
     fetchTickets();
-  fetchTeamMembers();
+    fetchTeamMembers();
 
-  socket.on('connect_error', (err) => console.error('Socket error:', err.message));
-  socket.on('ticketCreated', (newTicket) => {
-    if (isMounted) {
-      setTickets(prev => [...prev, {
-        id: newTicket.id.toString(),
-        title: newTicket.title,
-        description: newTicket.description,
-        assignee: teamMembers.find(m => m.id === newTicket.designee_id)?.name || 'Unassigned',
-        assigneeId: newTicket.designee_id,
-        parent: newTicket.status,
-        priority: newTicket.priority,
-      }]);
-    }
-  });
-
-  socket.on('ticketUpdated', (updatedTicket) => {
-    if (isMounted) {
-      setTickets(prev =>
-        prev.map(ticket =>
-          ticket.id === updatedTicket.id.toString()
-            ? { ...ticket, ...updatedTicket, assignee: teamMembers.find(m => m.id === updatedTicket.designee_id)?.name || 'Unassigned' }
-            : ticket
-        )
-      );
-    }
-  });
-
-  socket.on('ticketDeleted', ({ id }) => {
-    if (isMounted) setTickets(prev => prev.filter(ticket => ticket.id !== id.toString()));
-  });
-
-  return () => {
-    isMounted = false;
-    socket.off('ticketCreated');
-    socket.off('ticketUpdated');
-    socket.off('ticketDeleted');
-    socket.disconnect();
-  };
-}, [API_URL, SOCKET_URL, socket, teamMembers]); // Added socket and teamMembers
+    return () => {
+      isMounted = false;
+      socket.disconnect();
+      console.log('Socket cleanup complete');
+    };
+  }, [API_URL, SOCKET_URL, teamMembers]); // Added teamMembers to dependency array
 
   const toggleSidebar = () => setIsSidebarVisible(!isSidebarVisible);
 
@@ -140,7 +156,7 @@ function Overview() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setNewTicket(prev => ({
+    setNewTicket((prev) => ({
       ...prev,
       [name]: name === 'designee_id' ? (value === '' ? null : parseInt(value)) : value,
     }));
@@ -148,7 +164,7 @@ function Overview() {
 
   const handleEditInputChange = (e) => {
     const { name, value } = e.target;
-    setEditTicket(prev => ({
+    setEditTicket((prev) => ({
       ...prev,
       [name]: name === 'designee_id' ? (value === '' ? null : parseInt(value)) : value,
     }));
@@ -206,6 +222,8 @@ function Overview() {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
       closeEditModal();
+      // Optionally emit via socket if server doesn't already
+      // socket.emit('deleteTicket', { id: editTicket.id });
     } catch (error) {
       console.error('Error deleting ticket:', error.response ? error.response.data : error.message);
     }
@@ -216,13 +234,15 @@ function Overview() {
     if (!over || active.id === over.id) return;
 
     try {
-      const ticketToUpdate = tickets.find(t => t.id === active.id);
+      const ticketToUpdate = tickets.find((t) => t.id === active.id);
       if (ticketToUpdate) {
         await axios.put(
           `${API_URL}/cards/${active.id}`,
           { status: over.id },
           { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
         );
+        // Optionally emit via socket if server doesn't already
+        // socket.emit('updateTicket', { id: active.id, status: over.id });
       }
     } catch (error) {
       console.error('Error updating ticket status:', error.response ? error.response.data : error.message);
@@ -235,27 +255,23 @@ function Overview() {
     navigate('/login');
   };
 
-  
   return (
     <div className="container">
-
-    {isSidebarVisible && (
-      <div className="sidebar">
-        <button className="nav-button" onClick={openModal}>Create a Ticket</button>
-        <Link to="/dashboard">
-          <button className="nav-button">Dashboard</button>
-        </Link>
-        <button className="nav-button">All Tickets</button>
-        <Link to="/settings">
-          <button className="nav-button">Settings</button>
-        </Link>
-      </div>
-    )}
-
+      {isSidebarVisible && (
+        <div className="sidebar">
+          <button className="nav-button" onClick={openModal}>Create a Ticket</button>
+          <Link to="/dashboard">
+            <button className="nav-button">Dashboard</button>
+          </Link>
+          <button className="nav-button">All Tickets</button>
+          <Link to="/settings">
+            <button className="nav-button">Settings</button>
+          </Link>
+        </div>
+      )}
 
       <div className="main-content">
-          {/* Logout Button */}
-          <button className="logout-button" onClick={handleLogout}>Logout</button>
+        <button className="logout-button" onClick={handleLogout}>Logout</button>
         <button
           onClick={toggleSidebar}
           className="toggle-button"
@@ -270,8 +286,8 @@ function Overview() {
                 <h3>{id.charAt(0).toUpperCase() + id.slice(1).replace('-', ' ')}</h3>
                 <Droppable id={id} className="droppable">
                   {tickets
-                    .filter(ticket => ticket.parent === id)
-                    .map(ticket => (
+                    .filter((ticket) => ticket.parent === id)
+                    .map((ticket) => (
                       <Draggable key={ticket.id} id={ticket.id}>
                         <div
                           className="ticket-card"
@@ -286,7 +302,7 @@ function Overview() {
                         </div>
                       </Draggable>
                     ))}
-                  {tickets.filter(ticket => ticket.parent === id).length === 0 && (
+                  {tickets.filter((ticket) => ticket.parent === id).length === 0 && (
                     <div className="empty-droppable">No tickets here</div>
                   )}
                 </Droppable>
@@ -321,7 +337,7 @@ function Overview() {
                   onChange={handleInputChange}
                 >
                   <option value="">Unassigned</option>
-                  {teamMembers.map(member => (
+                  {teamMembers.map((member) => (
                     <option key={member.id} value={member.id}>{member.name}</option>
                   ))}
                 </select>
@@ -381,7 +397,7 @@ function Overview() {
                   onChange={handleEditInputChange}
                 >
                   <option value="">Unassigned</option>
-                  {teamMembers.map(member => (
+                  {teamMembers.map((member) => (
                     <option key={member.id} value={member.id}>{member.name}</option>
                   ))}
                 </select>
