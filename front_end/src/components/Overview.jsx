@@ -1,4 +1,4 @@
-import { DndContext } from '@dnd-kit/core';
+import { DndContext, PointerSensor } from '@dnd-kit/core';
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Droppable } from './Droppable';
@@ -160,7 +160,7 @@ function Overview() {
     }
   }, [isSessionValid, navigate]);
 
-  // Rest of your functions (toggleSidebar, openModal, etc.) remain unchanged
+  // Functions
   const toggleSidebar = () => setIsSidebarVisible(!isSidebarVisible);
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => {
@@ -315,7 +315,15 @@ function Overview() {
         </button>
 
         <div className="board-container">
-          <DndContext onDragEnd={handleDragEnd}>
+          <DndContext
+            onDragEnd={handleDragEnd}
+            sensors={[
+              {
+                sensor: PointerSensor,
+                options: { activationConstraint: { distance: 5 } },
+              },
+            ]}
+          >
             {containers.map((id) => (
               <div key={id} className="column">
                 <h3>{id.charAt(0).toUpperCase() + id.slice(1).replace('-', ' ')}</h3>
@@ -327,7 +335,10 @@ function Overview() {
                         <div
                           className="ticket-card"
                           data-parent={ticket.parent}
-                          onClick={() => openEditModal(ticket)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEditModal(ticket);
+                          }}
                           style={{ cursor: 'pointer' }}
                         >
                           <h4>{ticket.title}</h4>
