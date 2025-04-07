@@ -7,8 +7,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import io from 'socket.io-client';
 import './Overview.css';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
-//import Dropdown from 'react-bootstrap/Dropdown'; // Dropdown button 
-
+// import Dropdown from 'react-bootstrap/Dropdown'; // Uncomment if using board dropdown
 
 function Overview() {
   const navigate = useNavigate();
@@ -27,11 +26,13 @@ function Overview() {
   const [teamMembers, setTeamMembers] = useState([]);
   const socketRef = useRef(null);
 
+  // Backend URL setup (local vs production)
   const API_URL = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:3000/api');
   const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || (process.env.NODE_ENV === 'production' ? '/' : 'http://localhost:3000');
+
   const currentUser = JSON.parse(localStorage.getItem('user')) || {};
 
-    //  JWT Expiration Check (30-minute window)
+  // 🔐 Check for JWT expiration before rendering the component
   const isTokenExpired = () => {
     const token = localStorage.getItem('token');
     if (!token) return true;
@@ -39,21 +40,21 @@ function Overview() {
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
       const now = Math.floor(Date.now() / 1000);
-      return payload.exp < now;
+      return payload.exp < now; // expired if now is past the token's exp
     } catch {
       return true;
     }
   };
 
   if (isTokenExpired()) {
-    console.warn('Token expired. Logging out.');
+    console.warn("JWT expired. Logging out.");
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     navigate('/login');
     return null;
   }
 
-  // WebSocket connection (only once)
+  // 🔌 Setup socket connection
   useEffect(() => {
     const socket = io(SOCKET_URL, {
       auth: { token: localStorage.getItem('token') },
@@ -77,6 +78,7 @@ function Overview() {
       console.log('Socket disconnected:', reason);
     });
 
+    // 📨 Handle real-time updates
     socket.on('ticketCreated', (newTicket) => {
       setTickets(prev => [...prev, newTicket]);
     });
@@ -99,7 +101,7 @@ function Overview() {
     };
   }, [SOCKET_URL]);
 
-  // Fetch tickets and users
+  // 📦 Fetch initial tickets and team members
   useEffect(() => {
     let isMounted = true;
 
@@ -146,16 +148,13 @@ function Overview() {
     };
   }, [API_URL]);
 
-  // Define all missing functions
+  // 🧭 Sidebar and modal UI logic
   const toggleSidebar = () => setIsSidebarVisible(!isSidebarVisible);
-
   const openModal = () => setIsModalOpen(true);
-
   const closeModal = () => {
     setIsModalOpen(false);
     setNewTicket({ title: '', designee_id: null, description: '', priority: 1 });
   };
-
   const openEditModal = (ticket) => {
     setEditTicket({
       id: ticket.id,
@@ -166,12 +165,12 @@ function Overview() {
     });
     setIsEditModalOpen(true);
   };
-
   const closeEditModal = () => {
     setIsEditModalOpen(false);
     setEditTicket(null);
   };
 
+  // 📝 Input change handlers
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setNewTicket(prev => ({
@@ -179,7 +178,6 @@ function Overview() {
       [name]: name === 'designee_id' ? (value === '' ? null : parseInt(value)) : value,
     }));
   };
-
   const handleEditInputChange = (e) => {
     const { name, value } = e.target;
     setEditTicket(prev => ({
@@ -188,6 +186,7 @@ function Overview() {
     }));
   };
 
+  // ✅ Create new ticket
   const handleCreateTicket = async (e) => {
     e.preventDefault();
     if (!newTicket.title) return;
@@ -211,6 +210,7 @@ function Overview() {
     }
   };
 
+  // ✏️ Update ticket
   const handleUpdateTicket = async (e) => {
     e.preventDefault();
     if (!editTicket.title) return;
@@ -232,6 +232,7 @@ function Overview() {
     }
   };
 
+  // ❌ Delete ticket
   const handleDeleteTicket = async () => {
     if (!window.confirm('Are you sure you want to delete this ticket?')) return;
 
@@ -245,6 +246,7 @@ function Overview() {
     }
   };
 
+  // 🧲 Handle dragging a ticket between columns
   const handleDragEnd = async (event) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
@@ -270,7 +272,12 @@ function Overview() {
     }
   };
 
+  // 🔒 Logout + cleanup
   const handleLogout = () => {
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      socketRef.current = null;
+    }
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     navigate('/login');
@@ -281,26 +288,9 @@ function Overview() {
       {isSidebarVisible && (
         <div className="sidebar">
           <button className="nav-button" onClick={openModal}>Create a Ticket</button>
-          <Link to="/dashboard">
-            <button className="nav-button">Dashboard</button>
-          </Link>
-          {/* <Dropdown>
-            <Dropdown.Toggle variant="success" id="dropdown-basic">
-              Board Selection
-            </Dropdown.Toggle>
-
-            <Dropdown.Menu>
-              <Dropdown.Item href="#/action-1">Board 1</Dropdown.Item>
-              <Dropdown.Item href="#/action-2">Board 2</Dropdown.Item>
-              <Dropdown.Item href="#/action-3">Board 3</Dropdown.Item>
-            </Dropdown.Menu>
-          </Dropdown> */}
-
+          <Link to="/dashboard"><button className="nav-button">Dashboard</button></Link>
           <button className="nav-button">All Tickets</button>
-
-          <Link to="/settings">
-            <button className="nav-button">Settings</button>
-          </Link>
+          <Link to="/settings"><button className="nav-button">Settings</button></Link>
         </div>
       )}
 
@@ -313,6 +303,7 @@ function Overview() {
         >
           {isSidebarVisible ? <FaChevronLeft /> : <FaChevronRight />}
         </button>
+
         <div className="board-container">
           <DndContext onDragEnd={handleDragEnd}>
             {containers.map((id) => (
@@ -346,6 +337,7 @@ function Overview() {
         </div>
       </div>
 
+      {/* Create Ticket Modal */}
       {isModalOpen && (
         <div className="modal-overlay">
           <div className="modal">
@@ -353,23 +345,11 @@ function Overview() {
             <form onSubmit={handleCreateTicket}>
               <div className="form-group">
                 <label htmlFor="title">Title:</label>
-                <input
-                  id="title"
-                  type="text"
-                  name="title"
-                  value={newTicket.title}
-                  onChange={handleInputChange}
-                  required
-                />
+                <input id="title" type="text" name="title" value={newTicket.title} onChange={handleInputChange} required />
               </div>
               <div className="form-group">
                 <label htmlFor="designee_id">Assignee:</label>
-                <select
-                  id="designee_id"
-                  name="designee_id"
-                  value={newTicket.designee_id || ''}
-                  onChange={handleInputChange}
-                >
+                <select id="designee_id" name="designee_id" value={newTicket.designee_id || ''} onChange={handleInputChange}>
                   <option value="">Unassigned</option>
                   {teamMembers.map((member) => (
                     <option key={member.id} value={member.id}>{member.name}</option>
@@ -378,24 +358,11 @@ function Overview() {
               </div>
               <div className="form-group">
                 <label htmlFor="priority">Priority:</label>
-                <input
-                  id="priority"
-                  type="number"
-                  name="priority"
-                  value={newTicket.priority}
-                  onChange={handleInputChange}
-                  min="1"
-                  required
-                />
+                <input id="priority" type="number" name="priority" value={newTicket.priority} onChange={handleInputChange} min="1" required />
               </div>
               <div className="form-group">
                 <label htmlFor="description">Description:</label>
-                <textarea
-                  id="description"
-                  name="description"
-                  value={newTicket.description}
-                  onChange={handleInputChange}
-                />
+                <textarea id="description" name="description" value={newTicket.description} onChange={handleInputChange} />
               </div>
               <div className="modal-buttons">
                 <button type="submit" className="submit-button">Create</button>
@@ -406,6 +373,7 @@ function Overview() {
         </div>
       )}
 
+      {/* Edit Ticket Modal */}
       {isEditModalOpen && editTicket && (
         <div className="modal-overlay">
           <div className="modal">
@@ -413,23 +381,11 @@ function Overview() {
             <form onSubmit={handleUpdateTicket}>
               <div className="form-group">
                 <label htmlFor="edit-title">Title:</label>
-                <input
-                  id="edit-title"
-                  type="text"
-                  name="title"
-                  value={editTicket.title}
-                  onChange={handleEditInputChange}
-                  required
-                />
+                <input id="edit-title" type="text" name="title" value={editTicket.title} onChange={handleEditInputChange} required />
               </div>
               <div className="form-group">
                 <label htmlFor="edit-designee_id">Assignee:</label>
-                <select
-                  id="edit-designee_id"
-                  name="designee_id"
-                  value={editTicket.designee_id || ''}
-                  onChange={handleEditInputChange}
-                >
+                <select id="edit-designee_id" name="designee_id" value={editTicket.designee_id || ''} onChange={handleEditInputChange}>
                   <option value="">Unassigned</option>
                   {teamMembers.map((member) => (
                     <option key={member.id} value={member.id}>{member.name}</option>
@@ -438,24 +394,11 @@ function Overview() {
               </div>
               <div className="form-group">
                 <label htmlFor="edit-priority">Priority:</label>
-                <input
-                  id="edit-priority"
-                  type="number"
-                  name="priority"
-                  value={editTicket.priority}
-                  onChange={handleEditInputChange}
-                  min="1"
-                  required
-                />
+                <input id="edit-priority" type="number" name="priority" value={editTicket.priority} onChange={handleEditInputChange} min="1" required />
               </div>
               <div className="form-group">
                 <label htmlFor="edit-description">Description:</label>
-                <textarea
-                  id="edit-description"
-                  name="description"
-                  value={editTicket.description}
-                  onChange={handleEditInputChange}
-                />
+                <textarea id="edit-description" name="description" value={editTicket.description} onChange={handleEditInputChange} />
               </div>
               <div className="modal-buttons">
                 <button type="submit" className="submit-button">Update</button>
