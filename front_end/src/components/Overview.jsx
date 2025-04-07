@@ -7,6 +7,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import io from 'socket.io-client';
 import './Overview.css';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+//import Dropdown from 'react-bootstrap/Dropdown'; // Dropdown button 
+
 
 function Overview() {
   const navigate = useNavigate();
@@ -28,6 +30,28 @@ function Overview() {
   const API_URL = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:3000/api');
   const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || (process.env.NODE_ENV === 'production' ? '/' : 'http://localhost:3000');
   const currentUser = JSON.parse(localStorage.getItem('user')) || {};
+
+    //  JWT Expiration Check (30-minute window)
+  const isTokenExpired = () => {
+    const token = localStorage.getItem('token');
+    if (!token) return true;
+
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const now = Math.floor(Date.now() / 1000);
+      return payload.exp < now;
+    } catch {
+      return true;
+    }
+  };
+
+  if (isTokenExpired()) {
+    console.warn('Token expired. Logging out.');
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    navigate('/login');
+    return null;
+  }
 
   // WebSocket connection (only once)
   useEffect(() => {
@@ -122,9 +146,11 @@ function Overview() {
     };
   }, [API_URL]);
 
+  // Define all missing functions
   const toggleSidebar = () => setIsSidebarVisible(!isSidebarVisible);
 
   const openModal = () => setIsModalOpen(true);
+
   const closeModal = () => {
     setIsModalOpen(false);
     setNewTicket({ title: '', designee_id: null, description: '', priority: 1 });
@@ -231,6 +257,13 @@ function Overview() {
           { status: over.id },
           { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
         );
+        setTickets(prev =>
+          prev.map(ticket =>
+            ticket.id === active.id
+              ? { ...ticket, parent: over.id }
+              : ticket
+          )
+        );
       }
     } catch (error) {
       console.error('Error updating ticket status:', error.response ? error.response.data : error.message);
@@ -251,7 +284,20 @@ function Overview() {
           <Link to="/dashboard">
             <button className="nav-button">Dashboard</button>
           </Link>
+          {/* <Dropdown>
+            <Dropdown.Toggle variant="success" id="dropdown-basic">
+              Board Selection
+            </Dropdown.Toggle>
+
+            <Dropdown.Menu>
+              <Dropdown.Item href="#/action-1">Board 1</Dropdown.Item>
+              <Dropdown.Item href="#/action-2">Board 2</Dropdown.Item>
+              <Dropdown.Item href="#/action-3">Board 3</Dropdown.Item>
+            </Dropdown.Menu>
+          </Dropdown> */}
+
           <button className="nav-button">All Tickets</button>
+
           <Link to="/settings">
             <button className="nav-button">Settings</button>
           </Link>
