@@ -260,7 +260,16 @@ function Overview() {
           <Link to="/dashboard">
             <button className="nav-button">Dashboard</button>
           </Link>
+          <label>
+            Choose A Board: 
+            <select>
+              <option value="Board1">Board 1</option>
+              <option value="Board2">Board 2</option>
+            </select>
+          </label>
+
           <button className="nav-button">All Tickets</button>
+
           <Link to="/settings">
             <button className="nav-button">Settings</button>
           </Link>
