@@ -7,7 +7,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import io from 'socket.io-client';
 import './Overview.css';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
-// import Dropdown from 'react-bootstrap/Dropdown'; // Uncomment if using board dropdown
 
 function Overview() {
   const navigate = useNavigate();
@@ -24,37 +23,42 @@ function Overview() {
   });
   const [editTicket, setEditTicket] = useState(null);
   const [teamMembers, setTeamMembers] = useState([]);
+  const [isSessionValid, setIsSessionValid] = useState(true); // ⏱️ token validity check
   const socketRef = useRef(null);
 
-  // Backend URL setup (local vs production)
-  const API_URL = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:3000/api');
-  const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || (process.env.NODE_ENV === 'production' ? '/' : 'http://localhost:3000');
-
+  const API_URL =
+    process.env.REACT_APP_API_URL ||
+    (process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:3000/api');
+  const SOCKET_URL =
+    process.env.REACT_APP_SOCKET_URL ||
+    (process.env.NODE_ENV === 'production' ? '/' : 'http://localhost:3000');
   const currentUser = JSON.parse(localStorage.getItem('user')) || {};
 
-  // 🔐 Check for JWT expiration before rendering the component
-  const isTokenExpired = () => {
-    const token = localStorage.getItem('token');
-    if (!token) return true;
+  // ✅ JWT expiration check runs once
+  useEffect(() => {
+    const isTokenExpired = () => {
+      const token = localStorage.getItem('token');
+      if (!token) return true;
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const now = Math.floor(Date.now() / 1000);
+        return payload.exp < now;
+      } catch {
+        return true;
+      }
+    };
 
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      const now = Math.floor(Date.now() / 1000);
-      return payload.exp < now; // expired if now is past the token's exp
-    } catch {
-      return true;
+    if (isTokenExpired()) {
+      console.warn('JWT expired. Logging out.');
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      setIsSessionValid(false);
+      navigate('/login');
     }
-  };
+  }, [navigate]);
 
-  if (isTokenExpired()) {
-    console.warn("JWT expired. Logging out.");
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    navigate('/login');
-    return null;
-  }
+  if (!isSessionValid) return null;
 
-  // 🔌 Setup socket connection
   useEffect(() => {
     const socket = io(SOCKET_URL, {
       auth: { token: localStorage.getItem('token') },
@@ -78,21 +82,20 @@ function Overview() {
       console.log('Socket disconnected:', reason);
     });
 
-    // 📨 Handle real-time updates
     socket.on('ticketCreated', (newTicket) => {
-      setTickets(prev => [...prev, newTicket]);
+      setTickets((prev) => [...prev, newTicket]);
     });
 
     socket.on('ticketUpdated', (updatedTicket) => {
-      setTickets(prev =>
-        prev.map(ticket =>
+      setTickets((prev) =>
+        prev.map((ticket) =>
           ticket.id === updatedTicket.id.toString() ? { ...ticket, ...updatedTicket } : ticket
         )
       );
     });
 
     socket.on('ticketDeleted', ({ id }) => {
-      setTickets(prev => prev.filter(ticket => ticket.id !== id.toString()));
+      setTickets((prev) => prev.filter((ticket) => ticket.id !== id.toString()));
     });
 
     return () => {
@@ -101,7 +104,6 @@ function Overview() {
     };
   }, [SOCKET_URL]);
 
-  // 📦 Fetch initial tickets and team members
   useEffect(() => {
     let isMounted = true;
 
@@ -112,7 +114,7 @@ function Overview() {
         });
 
         if (isMounted) {
-          const mappedTickets = response.data.map(ticket => ({
+          const mappedTickets = response.data.map((ticket) => ({
             id: ticket.id.toString(),
             title: ticket.title,
             description: ticket.description,
@@ -148,13 +150,13 @@ function Overview() {
     };
   }, [API_URL]);
 
-  // 🧭 Sidebar and modal UI logic
   const toggleSidebar = () => setIsSidebarVisible(!isSidebarVisible);
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => {
     setIsModalOpen(false);
     setNewTicket({ title: '', designee_id: null, description: '', priority: 1 });
   };
+
   const openEditModal = (ticket) => {
     setEditTicket({
       id: ticket.id,
@@ -165,28 +167,28 @@ function Overview() {
     });
     setIsEditModalOpen(true);
   };
+
   const closeEditModal = () => {
     setIsEditModalOpen(false);
     setEditTicket(null);
   };
 
-  // 📝 Input change handlers
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setNewTicket(prev => ({
-      ...prev,
-      [name]: name === 'designee_id' ? (value === '' ? null : parseInt(value)) : value,
-    }));
-  };
-  const handleEditInputChange = (e) => {
-    const { name, value } = e.target;
-    setEditTicket(prev => ({
+    setNewTicket((prev) => ({
       ...prev,
       [name]: name === 'designee_id' ? (value === '' ? null : parseInt(value)) : value,
     }));
   };
 
-  // ✅ Create new ticket
+  const handleEditInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditTicket((prev) => ({
+      ...prev,
+      [name]: name === 'designee_id' ? (value === '' ? null : parseInt(value)) : value,
+    }));
+  };
+
   const handleCreateTicket = async (e) => {
     e.preventDefault();
     if (!newTicket.title) return;
@@ -210,7 +212,6 @@ function Overview() {
     }
   };
 
-  // ✏️ Update ticket
   const handleUpdateTicket = async (e) => {
     e.preventDefault();
     if (!editTicket.title) return;
@@ -232,7 +233,6 @@ function Overview() {
     }
   };
 
-  // ❌ Delete ticket
   const handleDeleteTicket = async () => {
     if (!window.confirm('Are you sure you want to delete this ticket?')) return;
 
@@ -246,7 +246,6 @@ function Overview() {
     }
   };
 
-  // 🧲 Handle dragging a ticket between columns
   const handleDragEnd = async (event) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
@@ -259,11 +258,9 @@ function Overview() {
           { status: over.id },
           { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
         );
-        setTickets(prev =>
-          prev.map(ticket =>
-            ticket.id === active.id
-              ? { ...ticket, parent: over.id }
-              : ticket
+        setTickets((prev) =>
+          prev.map((ticket) =>
+            ticket.id === active.id ? { ...ticket, parent: over.id } : ticket
           )
         );
       }
@@ -272,7 +269,6 @@ function Overview() {
     }
   };
 
-  // 🔒 Logout + cleanup
   const handleLogout = () => {
     if (socketRef.current) {
       socketRef.current.disconnect();
