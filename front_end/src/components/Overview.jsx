@@ -1,5 +1,5 @@
 import { DndContext } from '@dnd-kit/core';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Droppable } from './Droppable';
 import { Draggable } from './Draggable';
@@ -23,68 +23,70 @@ function Overview() {
   });
   const [editTicket, setEditTicket] = useState(null);
   const [teamMembers, setTeamMembers] = useState([]);
+  const socketRef = useRef(null);
 
   const API_URL = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:3000/api');
   const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || (process.env.NODE_ENV === 'production' ? '/' : 'http://localhost:3000');
   const currentUser = JSON.parse(localStorage.getItem('user')) || {};
 
+  // WebSocket connection (only once)
   useEffect(() => {
-    let isMounted = true;
     const socket = io(SOCKET_URL, {
       auth: { token: localStorage.getItem('token') },
+      transports: ['websocket'],
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 3000,
     });
 
-    socket.on('connect', () => console.log('Socket connected:', socket.id));
-    socket.on('connect_error', (err) => console.error('Socket connection error:', err.message));
-    socket.on('disconnect', (reason) => console.log('Socket disconnected:', reason));
+    socketRef.current = socket;
+
+    socket.on('connect', () => {
+      console.log('Socket connected:', socket.id);
+    });
+
+    socket.on('connect_error', (err) => {
+      console.error('Socket connection error:', err.message);
+    });
+
+    socket.on('disconnect', (reason) => {
+      console.log('Socket disconnected:', reason);
+    });
 
     socket.on('ticketCreated', (newTicket) => {
-      if (isMounted) {
-        setTickets((prev) => [
-          ...prev,
-          {
-            id: newTicket.id.toString(),
-            title: newTicket.title,
-            description: newTicket.description,
-            assignee: teamMembers.find((m) => m.id === newTicket.designee_id)?.name || 'Unassigned',
-            assigneeId: newTicket.designee_id,
-            parent: newTicket.status,
-            priority: newTicket.priority,
-          },
-        ]);
-      }
+      setTickets(prev => [...prev, newTicket]);
     });
 
     socket.on('ticketUpdated', (updatedTicket) => {
-      if (isMounted) {
-        setTickets((prev) =>
-          prev.map((ticket) =>
-            ticket.id === updatedTicket.id.toString()
-              ? {
-                  ...ticket,
-                  ...updatedTicket,
-                  assignee: teamMembers.find((m) => m.id === updatedTicket.designee_id)?.name || 'Unassigned',
-                }
-              : ticket
-          )
-        );
-      }
+      setTickets(prev =>
+        prev.map(ticket =>
+          ticket.id === updatedTicket.id.toString() ? { ...ticket, ...updatedTicket } : ticket
+        )
+      );
     });
 
     socket.on('ticketDeleted', ({ id }) => {
-      if (isMounted) {
-        setTickets((prev) => prev.filter((ticket) => ticket.id !== id.toString()));
-      }
+      setTickets(prev => prev.filter(ticket => ticket.id !== id.toString()));
     });
+
+    return () => {
+      socket.disconnect();
+      socketRef.current = null;
+    };
+  }, [SOCKET_URL]);
+
+  // Fetch tickets and users
+  useEffect(() => {
+    let isMounted = true;
 
     const fetchTickets = async () => {
       try {
         const response = await axios.get(`${API_URL}/cards`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-          timeout: 5000,
         });
+
         if (isMounted) {
-          const mappedTickets = response.data.map((ticket) => ({
+          const mappedTickets = response.data.map(ticket => ({
             id: ticket.id.toString(),
             title: ticket.title,
             description: ticket.description,
@@ -104,8 +106,8 @@ function Overview() {
       try {
         const response = await axios.get(`${API_URL}/users`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-          timeout: 5000,
         });
+
         if (isMounted) setTeamMembers(response.data);
       } catch (error) {
         console.error('Error fetching team members:', error.message);
@@ -117,10 +119,8 @@ function Overview() {
 
     return () => {
       isMounted = false;
-      socket.disconnect();
-      console.log('Socket cleanup complete');
     };
-  }, [API_URL, SOCKET_URL, teamMembers]);
+  }, [API_URL]);
 
   // Define all missing functions
   const toggleSidebar = () => setIsSidebarVisible(!isSidebarVisible);
@@ -150,7 +150,7 @@ function Overview() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setNewTicket((prev) => ({
+    setNewTicket(prev => ({
       ...prev,
       [name]: name === 'designee_id' ? (value === '' ? null : parseInt(value)) : value,
     }));
@@ -158,7 +158,7 @@ function Overview() {
 
   const handleEditInputChange = (e) => {
     const { name, value } = e.target;
-    setEditTicket((prev) => ({
+    setEditTicket(prev => ({
       ...prev,
       [name]: name === 'designee_id' ? (value === '' ? null : parseInt(value)) : value,
     }));
