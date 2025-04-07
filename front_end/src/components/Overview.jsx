@@ -31,6 +31,28 @@ function Overview() {
   const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || (process.env.NODE_ENV === 'production' ? '/' : 'http://localhost:3000');
   const currentUser = JSON.parse(localStorage.getItem('user')) || {};
 
+    //  JWT Expiration Check (30-minute window)
+  const isTokenExpired = () => {
+    const token = localStorage.getItem('token');
+    if (!token) return true;
+
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const now = Math.floor(Date.now() / 1000);
+      return payload.exp < now;
+    } catch {
+      return true;
+    }
+  };
+
+  if (isTokenExpired()) {
+    console.warn('Token expired. Logging out.');
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    navigate('/login');
+    return null;
+  }
+
   // WebSocket connection (only once)
   useEffect(() => {
     const socket = io(SOCKET_URL, {
