@@ -34,7 +34,7 @@ function Overview() {
     (process.env.NODE_ENV === 'production' ? '/' : 'http://localhost:3000');
   const currentUser = JSON.parse(localStorage.getItem('user')) || {};
 
-  // ✅ JWT expiration check runs once
+  // JWT expiration check
   useEffect(() => {
     const isTokenExpired = () => {
       const token = localStorage.getItem('token');
@@ -53,13 +53,13 @@ function Overview() {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       setIsSessionValid(false);
-      navigate('/login');
     }
-  }, [navigate]);
+  }, []);
 
-  if (!isSessionValid) return null;
-
+  // Socket setup
   useEffect(() => {
+    if (!isSessionValid) return;
+
     const socket = io(SOCKET_URL, {
       auth: { token: localStorage.getItem('token') },
       transports: ['websocket'],
@@ -102,9 +102,12 @@ function Overview() {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [SOCKET_URL]);
+  }, [SOCKET_URL, isSessionValid]);
 
+  // Fetch tickets and team members
   useEffect(() => {
+    if (!isSessionValid) return;
+
     let isMounted = true;
 
     const fetchTickets = async () => {
@@ -148,8 +151,16 @@ function Overview() {
     return () => {
       isMounted = false;
     };
-  }, [API_URL]);
+  }, [API_URL, isSessionValid]);
 
+  // Navigate to login if session is invalid
+  useEffect(() => {
+    if (!isSessionValid) {
+      navigate('/login');
+    }
+  }, [isSessionValid, navigate]);
+
+  // Rest of your functions (toggleSidebar, openModal, etc.) remain unchanged
   const toggleSidebar = () => setIsSidebarVisible(!isSidebarVisible);
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => {
@@ -278,6 +289,9 @@ function Overview() {
     localStorage.removeItem('user');
     navigate('/login');
   };
+
+  // Render only if session is valid
+  if (!isSessionValid) return null;
 
   return (
     <div className="container">
