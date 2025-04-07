@@ -8,6 +8,7 @@ import io from 'socket.io-client';
 import './Overview.css';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import Dropdown from 'react-bootstrap/Dropdown'; // Dropdown button 
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 function Overview() {
   const navigate = useNavigate();
