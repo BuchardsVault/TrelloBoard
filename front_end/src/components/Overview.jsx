@@ -7,8 +7,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import io from 'socket.io-client';
 import './Overview.css';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
-import Dropdown from 'react-bootstrap/Dropdown'; // Dropdown button 
-import 'bootstrap/dist/css/bootstrap.min.css';
+//import Dropdown from 'react-bootstrap/Dropdown'; // Dropdown button 
+
 
 function Overview() {
   const navigate = useNavigate();
@@ -262,7 +262,7 @@ function Overview() {
           <Link to="/dashboard">
             <button className="nav-button">Dashboard</button>
           </Link>
-          <Dropdown>
+          {/* <Dropdown>
             <Dropdown.Toggle variant="success" id="dropdown-basic">
               Board Selection
             </Dropdown.Toggle>
@@ -272,7 +272,7 @@ function Overview() {
               <Dropdown.Item href="#/action-2">Board 2</Dropdown.Item>
               <Dropdown.Item href="#/action-3">Board 3</Dropdown.Item>
             </Dropdown.Menu>
-          </Dropdown>
+          </Dropdown> */}
 
           <button className="nav-button">All Tickets</button>
 
