@@ -233,6 +233,13 @@ function Overview() {
           { status: over.id },
           { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
         );
+        setTickets(prev =>
+          prev.map(ticket =>
+            ticket.id === active.id
+              ? { ...ticket, parent: over.id }
+              : ticket
+          )
+        );
       }
     } catch (error) {
       console.error('Error updating ticket status:', error.response ? error.response.data : error.message);
