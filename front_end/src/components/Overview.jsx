@@ -7,6 +7,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import io from 'socket.io-client';
 import './Overview.css';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import Dropdown from 'react-bootstrap/Dropdown'; // Dropdown button 
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 function Overview() {
   const navigate = useNavigate();
@@ -21,7 +23,7 @@ function Overview() {
     description: '',
     priority: 1,
   });
-  const [editTicket, setEditTicket] = useState(null);
+  const [editTicket, setEditTicket] = useState();
   const [teamMembers, setTeamMembers] = useState([]);
   const socketRef = useRef(null);
 
@@ -260,7 +262,20 @@ function Overview() {
           <Link to="/dashboard">
             <button className="nav-button">Dashboard</button>
           </Link>
+          <Dropdown>
+            <Dropdown.Toggle variant="success" id="dropdown-basic">
+              Dropdown Button
+            </Dropdown.Toggle>
+
+            <Dropdown.Menu>
+              <Dropdown.Item href="#/action-1">Board 1</Dropdown.Item>
+              <Dropdown.Item href="#/action-2">Board 2</Dropdown.Item>
+              <Dropdown.Item href="#/action-3">Board 3</Dropdown.Item>
+            </Dropdown.Menu>
+          </Dropdown>
+
           <button className="nav-button">All Tickets</button>
+
           <Link to="/settings">
             <button className="nav-button">Settings</button>
           </Link>
