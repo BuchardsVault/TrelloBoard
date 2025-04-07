@@ -23,7 +23,7 @@ function Overview() {
     description: '',
     priority: 1,
   });
-  const [editTicket, setEditTicket] = useState();
+  const [editTicket, setEditTicket] = useState(null);
   const [teamMembers, setTeamMembers] = useState([]);
   const socketRef = useRef(null);
 
@@ -264,7 +264,7 @@ function Overview() {
           </Link>
           <Dropdown>
             <Dropdown.Toggle variant="success" id="dropdown-basic">
-              Dropdown Button
+              Board Selection
             </Dropdown.Toggle>
 
             <Dropdown.Menu>
