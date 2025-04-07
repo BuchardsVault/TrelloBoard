@@ -21,7 +21,7 @@ function Overview() {
     description: '',
     priority: 1,
   });
-  const [editTicket, setEditTicket] = useState(null);
+  const [editTicket, setEditTicket] = useState();
   const [teamMembers, setTeamMembers] = useState([]);
   const socketRef = useRef(null);
 
