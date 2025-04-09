@@ -1,5 +1,5 @@
-import { DndContext } from '@dnd-kit/core';
-import React, { useState, useEffect } from 'react';
+import { DndContext, PointerSensor } from '@dnd-kit/core';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Droppable } from './Droppable';
 import { Draggable } from './Draggable';
@@ -23,16 +23,52 @@ function Overview() {
   });
   const [editTicket, setEditTicket] = useState(null);
   const [teamMembers, setTeamMembers] = useState([]);
+  const [isSessionValid, setIsSessionValid] = useState(true); // ⏱️ token validity check
+  const socketRef = useRef(null);
 
-  const API_URL = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:3000/api');
-  const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || (process.env.NODE_ENV === 'production' ? '/' : 'http://localhost:3000');
+  const API_URL =
+    process.env.REACT_APP_API_URL ||
+    (process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:3000/api');
+  const SOCKET_URL =
+    process.env.REACT_APP_SOCKET_URL ||
+    (process.env.NODE_ENV === 'production' ? '/' : 'http://localhost:3000');
   const currentUser = JSON.parse(localStorage.getItem('user')) || {};
 
+  // JWT expiration check
   useEffect(() => {
-    let isMounted = true;
+    const isTokenExpired = () => {
+      const token = localStorage.getItem('token');
+      if (!token) return true;
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const now = Math.floor(Date.now() / 1000);
+        return payload.exp < now;
+      } catch {
+        return true;
+      }
+    };
+
+    if (isTokenExpired()) {
+      console.warn('JWT expired. Logging out.');
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      setIsSessionValid(false);
+    }
+  }, []);
+
+  // Socket setup
+  useEffect(() => {
+    if (!isSessionValid) return;
+
     const socket = io(SOCKET_URL, {
       auth: { token: localStorage.getItem('token') },
+      transports: ['websocket'],
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 3000,
     });
+
+    socketRef.current = socket;
 
     socket.on('connect', () => {
       console.log('Socket connected:', socket.id);
@@ -47,50 +83,39 @@ function Overview() {
     });
 
     socket.on('ticketCreated', (newTicket) => {
-      if (isMounted) {
-        setTickets((prev) => [
-          ...prev,
-          {
-            id: newTicket.id.toString(),
-            title: newTicket.title,
-            description: newTicket.description,
-            assignee: teamMembers.find((m) => m.id === newTicket.designee_id)?.name || 'Unassigned',
-            assigneeId: newTicket.designee_id,
-            parent: newTicket.status,
-            priority: newTicket.priority,
-          },
-        ]);
-      }
+      setTickets((prev) => [...prev, newTicket]);
     });
 
     socket.on('ticketUpdated', (updatedTicket) => {
-      if (isMounted) {
-        setTickets((prev) =>
-          prev.map((ticket) =>
-            ticket.id === updatedTicket.id.toString()
-              ? {
-                  ...ticket,
-                  ...updatedTicket,
-                  assignee: teamMembers.find((m) => m.id === updatedTicket.designee_id)?.name || 'Unassigned',
-                }
-              : ticket
-          )
-        );
-      }
+      setTickets((prev) =>
+        prev.map((ticket) =>
+          ticket.id === updatedTicket.id.toString() ? { ...ticket, ...updatedTicket } : ticket
+        )
+      );
     });
 
     socket.on('ticketDeleted', ({ id }) => {
-      if (isMounted) {
-        setTickets((prev) => prev.filter((ticket) => ticket.id !== id.toString()));
-      }
+      setTickets((prev) => prev.filter((ticket) => ticket.id !== id.toString()));
     });
+
+    return () => {
+      socket.disconnect();
+      socketRef.current = null;
+    };
+  }, [SOCKET_URL, isSessionValid]);
+
+  // Fetch tickets and team members
+  useEffect(() => {
+    if (!isSessionValid) return;
+
+    let isMounted = true;
 
     const fetchTickets = async () => {
       try {
         const response = await axios.get(`${API_URL}/cards`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-          timeout: 5000,
         });
+
         if (isMounted) {
           const mappedTickets = response.data.map((ticket) => ({
             id: ticket.id.toString(),
@@ -112,8 +137,8 @@ function Overview() {
       try {
         const response = await axios.get(`${API_URL}/users`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-          timeout: 5000,
         });
+
         if (isMounted) setTeamMembers(response.data);
       } catch (error) {
         console.error('Error fetching team members:', error.message);
@@ -125,13 +150,18 @@ function Overview() {
 
     return () => {
       isMounted = false;
-      socket.disconnect();
-      console.log('Socket cleanup complete');
     };
-  }, [API_URL, SOCKET_URL, teamMembers]); // Added teamMembers to dependency array
+  }, [API_URL, isSessionValid]);
 
+  // Navigate to login if session is invalid
+  useEffect(() => {
+    if (!isSessionValid) {
+      navigate('/login');
+    }
+  }, [isSessionValid, navigate]);
+
+  // Functions
   const toggleSidebar = () => setIsSidebarVisible(!isSidebarVisible);
-
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => {
     setIsModalOpen(false);
@@ -222,8 +252,6 @@ function Overview() {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
       closeEditModal();
-      // Optionally emit via socket if server doesn't already
-      // socket.emit('deleteTicket', { id: editTicket.id });
     } catch (error) {
       console.error('Error deleting ticket:', error.response ? error.response.data : error.message);
     }
@@ -241,8 +269,11 @@ function Overview() {
           { status: over.id },
           { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
         );
-        // Optionally emit via socket if server doesn't already
-        // socket.emit('updateTicket', { id: active.id, status: over.id });
+        setTickets((prev) =>
+          prev.map((ticket) =>
+            ticket.id === active.id ? { ...ticket, parent: over.id } : ticket
+          )
+        );
       }
     } catch (error) {
       console.error('Error updating ticket status:', error.response ? error.response.data : error.message);
@@ -250,23 +281,26 @@ function Overview() {
   };
 
   const handleLogout = () => {
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      socketRef.current = null;
+    }
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     navigate('/login');
   };
+
+  // Render only if session is valid
+  if (!isSessionValid) return null;
 
   return (
     <div className="container">
       {isSidebarVisible && (
         <div className="sidebar">
           <button className="nav-button" onClick={openModal}>Create a Ticket</button>
-          <Link to="/dashboard">
-            <button className="nav-button">Dashboard</button>
-          </Link>
+          <Link to="/dashboard"><button className="nav-button">Dashboard</button></Link>
           <button className="nav-button">All Tickets</button>
-          <Link to="/settings">
-            <button className="nav-button">Settings</button>
-          </Link>
+          <Link to="/settings"><button className="nav-button">Settings</button></Link>
         </div>
       )}
 
@@ -279,8 +313,17 @@ function Overview() {
         >
           {isSidebarVisible ? <FaChevronLeft /> : <FaChevronRight />}
         </button>
+
         <div className="board-container">
-          <DndContext onDragEnd={handleDragEnd}>
+          <DndContext
+            onDragEnd={handleDragEnd}
+            sensors={[
+              {
+                sensor: PointerSensor,
+                options: { activationConstraint: { distance: 5 } },
+              },
+            ]}
+          >
             {containers.map((id) => (
               <div key={id} className="column">
                 <h3>{id.charAt(0).toUpperCase() + id.slice(1).replace('-', ' ')}</h3>
@@ -292,7 +335,10 @@ function Overview() {
                         <div
                           className="ticket-card"
                           data-parent={ticket.parent}
-                          onClick={() => openEditModal(ticket)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEditModal(ticket);
+                          }}
                           style={{ cursor: 'pointer' }}
                         >
                           <h4>{ticket.title}</h4>
@@ -312,6 +358,7 @@ function Overview() {
         </div>
       </div>
 
+      {/* Create Ticket Modal */}
       {isModalOpen && (
         <div className="modal-overlay">
           <div className="modal">
@@ -319,23 +366,11 @@ function Overview() {
             <form onSubmit={handleCreateTicket}>
               <div className="form-group">
                 <label htmlFor="title">Title:</label>
-                <input
-                  id="title"
-                  type="text"
-                  name="title"
-                  value={newTicket.title}
-                  onChange={handleInputChange}
-                  required
-                />
+                <input id="title" type="text" name="title" value={newTicket.title} onChange={handleInputChange} required />
               </div>
               <div className="form-group">
                 <label htmlFor="designee_id">Assignee:</label>
-                <select
-                  id="designee_id"
-                  name="designee_id"
-                  value={newTicket.designee_id || ''}
-                  onChange={handleInputChange}
-                >
+                <select id="designee_id" name="designee_id" value={newTicket.designee_id || ''} onChange={handleInputChange}>
                   <option value="">Unassigned</option>
                   {teamMembers.map((member) => (
                     <option key={member.id} value={member.id}>{member.name}</option>
@@ -344,24 +379,11 @@ function Overview() {
               </div>
               <div className="form-group">
                 <label htmlFor="priority">Priority:</label>
-                <input
-                  id="priority"
-                  type="number"
-                  name="priority"
-                  value={newTicket.priority}
-                  onChange={handleInputChange}
-                  min="1"
-                  required
-                />
+                <input id="priority" type="number" name="priority" value={newTicket.priority} onChange={handleInputChange} min="1" required />
               </div>
               <div className="form-group">
                 <label htmlFor="description">Description:</label>
-                <textarea
-                  id="description"
-                  name="description"
-                  value={newTicket.description}
-                  onChange={handleInputChange}
-                />
+                <textarea id="description" name="description" value={newTicket.description} onChange={handleInputChange} />
               </div>
               <div className="modal-buttons">
                 <button type="submit" className="submit-button">Create</button>
@@ -372,6 +394,7 @@ function Overview() {
         </div>
       )}
 
+      {/* Edit Ticket Modal */}
       {isEditModalOpen && editTicket && (
         <div className="modal-overlay">
           <div className="modal">
@@ -379,23 +402,11 @@ function Overview() {
             <form onSubmit={handleUpdateTicket}>
               <div className="form-group">
                 <label htmlFor="edit-title">Title:</label>
-                <input
-                  id="edit-title"
-                  type="text"
-                  name="title"
-                  value={editTicket.title}
-                  onChange={handleEditInputChange}
-                  required
-                />
+                <input id="edit-title" type="text" name="title" value={editTicket.title} onChange={handleEditInputChange} required />
               </div>
               <div className="form-group">
                 <label htmlFor="edit-designee_id">Assignee:</label>
-                <select
-                  id="edit-designee_id"
-                  name="designee_id"
-                  value={editTicket.designee_id || ''}
-                  onChange={handleEditInputChange}
-                >
+                <select id="edit-designee_id" name="designee_id" value={editTicket.designee_id || ''} onChange={handleEditInputChange}>
                   <option value="">Unassigned</option>
                   {teamMembers.map((member) => (
                     <option key={member.id} value={member.id}>{member.name}</option>
@@ -404,24 +415,11 @@ function Overview() {
               </div>
               <div className="form-group">
                 <label htmlFor="edit-priority">Priority:</label>
-                <input
-                  id="edit-priority"
-                  type="number"
-                  name="priority"
-                  value={editTicket.priority}
-                  onChange={handleEditInputChange}
-                  min="1"
-                  required
-                />
+                <input id="edit-priority" type="number" name="priority" value={editTicket.priority} onChange={handleEditInputChange} min="1" required />
               </div>
               <div className="form-group">
                 <label htmlFor="edit-description">Description:</label>
-                <textarea
-                  id="edit-description"
-                  name="description"
-                  value={editTicket.description}
-                  onChange={handleEditInputChange}
-                />
+                <textarea id="edit-description" name="description" value={editTicket.description} onChange={handleEditInputChange} />
               </div>
               <div className="modal-buttons">
                 <button type="submit" className="submit-button">Update</button>
